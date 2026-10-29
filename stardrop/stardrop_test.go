@@ -1,21 +1,14 @@
 package stardrop
 
 import (
-	"os"
 	"path/filepath"
 	"slices"
 	"testing"
+
+	"github.com/Rethunk-Tech/go-modmanagers/internal/testwrite"
 )
 
-func write(t *testing.T, path, body string) {
-	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
-		t.Fatal(err)
-	}
-}
+func write(t *testing.T, path, body string) { testwrite.File(t, path, body) }
 
 func TestProfiles(t *testing.T) {
 	t.Parallel()

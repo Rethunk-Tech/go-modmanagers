@@ -16,6 +16,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Rethunk-Tech/go-modmanagers/internal/testwrite"
+
 	archive "github.com/Rethunk-Tech/go-archive"
 	httpkit "github.com/Rethunk-Tech/go-httpkit"
 	safefs "github.com/Rethunk-Tech/go-safefs"
@@ -210,15 +212,7 @@ func TestFetchCode(t *testing.T) {
 	}
 }
 
-func write(t *testing.T, path, body string) {
-	t.Helper()
-	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
-		t.Fatal(err)
-	}
-}
+func write(t *testing.T, path, body string) { testwrite.File(t, path, body) }
 
 func TestProfileFolder(t *testing.T) {
 	t.Parallel()
