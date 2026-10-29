@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	safefs "github.com/Rethunk-Tech/go-safefs"
 	"github.com/Rethunk-Tech/go-modmanagers/internal/nexusurl"
+	safefs "github.com/Rethunk-Tech/go-safefs"
 )
 
 // DataDir is <appData>/Stardrop/Data, where .NET's ApplicationData puts it (%APPDATA% on Windows, the XDG

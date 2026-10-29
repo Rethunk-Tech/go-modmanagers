@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	safefs "github.com/Rethunk-Tech/go-safefs"
 	"github.com/Rethunk-Tech/go-modmanagers/internal/nexusurl"
+	safefs "github.com/Rethunk-Tech/go-safefs"
 )
 
 // Instances lists the global instance folders, <localAppData>/ModOrganizer/<name>. A missing folder has none.
