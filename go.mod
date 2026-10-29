@@ -10,7 +10,11 @@ tool (
 	golang.org/x/vuln/cmd/govulncheck
 )
 
-require github.com/Rethunk-Tech/go-safefs v0.1.0
+require (
+	github.com/Rethunk-Tech/go-safefs v0.1.0
+	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d
+	golang.org/x/sys v0.49.0
+)
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.4.0 // indirect
@@ -90,6 +94,7 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godoc-lint/godoc-lint v0.11.4 // indirect
 	github.com/gofrs/flock v0.13.1 // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/golangci/asciicheck v0.5.0 // indirect
 	github.com/golangci/canonicalheader v0.0.0-20260928145534-e18e5c5a078f // indirect
 	github.com/golangci/dupl v0.0.0-20260401084720-c99c5cf5c202 // indirect
@@ -211,7 +216,6 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20261014143641-f0251eb4aa3e // indirect
 	golang.org/x/mod v0.42.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/telemetry v0.0.0-20261021172232-6cd571d43fbb // indirect
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect

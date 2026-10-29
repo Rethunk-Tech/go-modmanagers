@@ -8,6 +8,7 @@ Notable changes to `go-modmanagers`. The format follows
 
 ### Added
 
+- `vortex`: read Vortex's `state.v2` from a private copy (profiles, mods, staging folder, multi-user flag, data-folder candidates); a database a running Vortex holds open is `ErrLocked`.
 - `stardrop`: list and read Stardrop profiles (both enabled-mod shapes, preserved configs, Nexus ids) and resolve its mods folder from `Settings.json`.
 - `mo2`: open any Mod Organizer 2 instance folder with its configurable mods and profiles folders resolved, list profiles, read `modlist.txt` and `meta.ini`.
 
