@@ -121,7 +121,8 @@ func ParseModlist(data []byte) []Entry {
 			continue
 		}
 		flag, name := line[0], line[1:]
-		if flag != '+' && flag != '-' {
+		// A name starting with * is MO2's unmanaged marker, and no Windows folder can be named so.
+		if flag != '+' && flag != '-' || strings.HasPrefix(name, "*") {
 			continue
 		}
 		item := Entry{Name: name, Enabled: flag == '+'}
