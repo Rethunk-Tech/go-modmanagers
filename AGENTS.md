@@ -1,7 +1,6 @@
 # AGENTS.md
 
-<!-- scaffold: two or three sentences: what package `modmanagers` does, who imports it, and what it never
-imports (no consumer package). -->
+This module reads the files other mod managers keep their profiles in, one package per format: `vortex`, `mo2`, `stardrop`, `r2modman`, `gale`. It returns each manager's own records and resolves nothing into another program's model, and it never writes the files it reads. It imports no consumer package and has no root package, so there is no `doc.go`.
 
 ## Gate
 
@@ -11,9 +10,26 @@ Windows-only behaviour runs; say here which tests depend on it.
 
 ## Shape
 
-<!-- scaffold: the invariants a change must keep, each with its reason: what stays unexported and
-why, which function is the single path for what, which bound is policy and which is not. -->
+- One package per format, no shared type or interface: the managers' records differ, and a common profile type would be the lowest common denominator a caller then has to undo. A package imports only its own format's third-party dependencies (LevelDB only in `vortex`, SQLite only in `gale`, YAML only in `r2modman`), so a caller of one does not link the others.
+- Nothing writes the source. `vortex.Read` works on a private copy, because a running Vortex holds `LOCK` and a copy guarantees the live files are never opened for writing; `gale.Profiles` opens SQLite read-only and immutable for the same reason.
+- `.r2z` bytes are read through go-archive's `ExtractFunc`, so a profile code is never admitted more loosely than any archive: a second hand-rolled zip reader would drift from those rules.
+- Every read of input another program wrote is capped (`safefs.ReadCapped`, `httpkit.DoCapped`), and an over-cap error wraps `safefs.ErrTooLarge`.
+- Folders come from the caller, except `Bases`, the one per-OS answer: on Linux it uses `userdirs.HostConfigHome` or `HostDataHome`, so inside a Flatpak the manager's folder is the host's and the sandbox's own folder, which holds no other manager's data, is never searched.
+- The mods column of a Gale row is parsed by `Profile.Mods`, not by `Profiles`, so one malformed row does not hide the others.
+- A path handed back to a caller is a native path, except `r2modman.File.Path` and `Export.Files` keys, which are slash-separated on every OS.
 
 ## Files
 
-<!-- scaffold: a `| File | Holds |` table, one row per non-test Go file. -->
+| File | Holds |
+| --- | --- |
+| `vortex/vortex.go` | `Read`, the LevelDB copy and tree rebuild, profiles, mods, staging folder, `Roots` |
+| `vortex/locked_*.go` | Which error means another process holds a file open |
+| `mo2/mo2.go` | Instance folders, `ModOrganizer.ini` paths, modlist, `meta.ini` |
+| `stardrop/stardrop.go` | Profile files and `Settings.json` |
+| `r2modman/export.go` | `.r2z` reading and its admission |
+| `r2modman/code.go` | Profile codes and the Thunderstore client |
+| `r2modman/profile.go` | Profile folders, `BepInEx/config`, data folders |
+| `gale/gale.go` | The profiles table, data folders, mods JSON |
+| `gale/code.go` | Sync-code ids and the sync client |
+| `internal/managerbase` | The per-OS base folder shared by `r2modman` and `gale` |
+| `internal/nexusurl` | The Nexus mod id in a mod-page URL |

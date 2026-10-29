@@ -112,7 +112,7 @@ func TestCodeID(t *testing.T) {
 	t.Parallel()
 	const legacy = "ASNFZ4mrze8BI0VniavN7w"
 	for text, want := range map[string]string{
-		"E5RG8F": "E5RG8F", "e5rg8f": "E5RG8F", " E5RG8F\n": "E5RG8F", legacy: legacy,
+		"E5RG8F": "E5RG8F", "e5rg8f": "E5RG8F", legacy: legacy,
 		"https://gale.kesomannen.com/api/desktop/profile/sync/clone/E5RG8F": "E5RG8F",
 		"gale://profile/sync/clone/e5rg8f/":                                 "E5RG8F",
 		"gale://profile/sync/clone/" + legacy:                               legacy,
@@ -126,6 +126,13 @@ func TestCodeID(t *testing.T) {
 		if id != want || ok != (want != "") {
 			t.Errorf("CodeID(%q) = %q, %v", text, id, ok)
 		}
+	}
+}
+
+func TestCodeIDTrimsPastedWhitespace(t *testing.T) {
+	t.Parallel()
+	if id, ok := CodeID(" e5rg8f\n"); !ok || id != "E5RG8F" {
+		t.Fatalf("CodeID = %q, %v", id, ok)
 	}
 }
 

@@ -9,10 +9,9 @@
 
 ---
 
-Read-only readers for the files other mod managers keep their profiles in: Vortex, Mod Organizer 2, Stardrop, r2modman and Gale. Package `modmanagers`, module `github.com/Rethunk-Tech/go-modmanagers`.
+Read-only readers for the files other mod managers keep their profiles in: Vortex, Mod Organizer 2, Stardrop, r2modman and Gale. Module `github.com/Rethunk-Tech/go-modmanagers`, one package per manager.
 
-<!-- scaffold: one short paragraph on what the package guarantees and why it exists, in plain
-words. -->
+Each reader returns the manager's own records in the manager's own terms (names, version text, enabled flags, folders, Nexus ids) and never writes, locks or resolves them into another program's model. A package imports only its own format's dependencies.
 
 ## Quick start
 
@@ -24,7 +23,11 @@ A worked example and the contracts: [HUMANS.md](HUMANS.md).
 
 ## Features
 
-<!-- scaffold: 3 to 6 bullets, each a capability a caller can rely on. No roadmap. -->
+- `vortex`: profiles, mods and staging folder from `state.v2`, read from a private copy.
+- `mo2`: instance folders, `[Settings]` paths, `modlist.txt` and `meta.ini`.
+- `stardrop`: profile JSON and the mods folder from `Settings.json`.
+- `r2modman`: `.r2z` exports and profile codes read under go-archive's admission rules, profile folders, data folders per OS.
+- `gale`: the profiles table read-only, and sync codes from an id, a copied link or a `gale://` deep link.
 
 ## Documentation
 
