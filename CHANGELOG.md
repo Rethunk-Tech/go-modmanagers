@@ -6,4 +6,9 @@ Notable changes to `go-modmanagers`. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `stardrop`: list and read Stardrop profiles (both enabled-mod shapes, preserved configs, Nexus ids) and resolve its mods folder from `Settings.json`.
+- `mo2`: open any Mod Organizer 2 instance folder with its configurable mods and profiles folders resolved, list profiles, read `modlist.txt` and `meta.ini`.
+
 [Unreleased]: https://github.com/Rethunk-Tech/go-modmanagers/commits/main
