@@ -6,7 +6,7 @@ This module reads the files other mod managers keep their profiles in, one packa
 
 `gate` is the command. Each override in `.gate.toml` is there because a runner
 cannot resolve that check from PATH. The `windows-latest` test job is the only place
-Windows-only behaviour runs; say here which tests depend on it.
+Windows-only behaviour runs: `vortex`'s `TestReadReportsLocked` and the readers' backslash and drive-letter paths.
 
 ## Shape
 
@@ -15,6 +15,15 @@ Windows-only behaviour runs; say here which tests depend on it.
 - `.r2z` bytes are read through go-archive's `ExtractFunc`, so a profile code is never admitted more loosely than any archive: a second hand-rolled zip reader would drift from those rules.
 - Every read of input another program wrote is capped (`safefs.ReadCapped`, `httpkit.DoCapped`), and an over-cap error wraps `safefs.ErrTooLarge`.
 - Folders come from the caller, except `Bases`, the one per-OS answer: on Linux it uses `userdirs.HostConfigHome` or `HostDataHome`, so inside a Flatpak the manager's folder is the host's and the sandbox's own folder, which holds no other manager's data, is never searched.
+- The module reads and never writes: the `.r2z` writer stays with its caller until a second caller needs a
+  `WriteExport`.
+- `gale` opens SQLite itself through CGO-free `modernc.org/sqlite` and takes no `*sql.DB`, because every caller that
+  reads Gale needs a SQLite driver anyway.
+- Fixtures are synthetic, built in the test or hand-written. No file another manager wrote is checked in: the
+  upstreams are GPL-3.0, and real exports hold personal data. A real export used as a fixture is scrubbed first: for a
+  Gale `data.sqlite3`, empty `auth`, `prefs` and `telemetry`, point `profiles.path` and each local mod's `icon` at
+  neutral folders, then `VACUUM` and commit it checkpointed, with no `-wal` or `-shm`; for an `.r2z` or `mods.yml`,
+  check `icon:`, paths and config values for personal data.
 - The mods column of a Gale row is parsed by `Profile.Mods`, not by `Profiles`, so one malformed row does not hide the others.
 - A path handed back to a caller is a native path, except `r2modman.File.Path` and `Export.Files` keys, which are slash-separated on every OS.
 
