@@ -53,6 +53,8 @@ The other packages read local files: `vortex.Read(dataDir, vortex.Options{})` th
 | `mo2.ParseModlist` | File order; `*` and `_separator` entries, blanks and comments skipped; a repeated name keeps its first place and last flag |
 | `stardrop.ReadProfile` | `EnabledModIds` as strings or `{UniqueId}` objects, names trimmed, the file stem when the name is empty |
 | `r2modman.ReadExport` | Refuses traversal, links, special files, names holding `:`, case-only collisions, exact duplicates, over 5,000 entries, a file over 16 MiB, 256 MiB in all; an absent `enabled` is enabled |
+| `r2modman.WriteExport` | Builds the `.r2z` body `ReadExport` reads back: `export.r2x` (every mod's `enabled` written), then `Files` in path order; a `Files` key of `export.r2x` is refused. Writes no file |
+| `r2modman.ParseVersion` | Exactly three non-negative decimal numbers, `major.minor.patch`; anything else is an error |
 | `r2modman.CodeKey`, `DecodeCode` | A bare UUID or `gale://profile/import/<uuid>` is a key; a code is the prefix then base64 with any whitespace |
 | `r2modman.Client.FetchCode`, `gale.Client.FetchCode` | A non-200 answer is a `*httpkit.StatusError`; a body over `MaxBytes` is `safefs.ErrTooLarge`; the deadline is the context |
 | `gale.CodeID` | A six-character code in either case (returned upper-case), a 22-character base64url id unchanged, or a copied link or deep link ending in one |

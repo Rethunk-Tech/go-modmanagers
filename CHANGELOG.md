@@ -6,6 +6,10 @@ Notable changes to `go-modmanagers`. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `r2modman.WriteExport` builds an `.r2z` body that `ReadExport` reads back, and `r2modman.ParseVersion` reads a `major.minor.patch` string into a `Version`.
+
 ## [0.1.0] - 2026-10-29
 
 ### Added

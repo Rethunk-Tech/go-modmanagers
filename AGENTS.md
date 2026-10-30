@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This module reads the files other mod managers keep their profiles in, one package per format: `vortex`, `mo2`, `stardrop`, `r2modman`, `gale`. It returns each manager's own records and resolves nothing into another program's model, and it never writes the files it reads. It imports no consumer package and has no root package, so there is no `doc.go`.
+This module reads the files other mod managers keep their profiles in, one package per format: `vortex`, `mo2`, `stardrop`, `r2modman`, `gale`. It returns each manager's own records and resolves nothing into another program's model, and it never writes the files it reads (`r2modman.WriteExport` only builds a share-code body in memory). It imports no consumer package and has no root package, so there is no `doc.go`.
 
 ## Gate
 
@@ -15,8 +15,7 @@ Windows-only behaviour runs: `vortex`'s `TestReadReportsLocked` and the readers'
 - `.r2z` bytes are read through go-archive's `ExtractFunc`, so a profile code is never admitted more loosely than any archive: a second hand-rolled zip reader would drift from those rules.
 - Every read of input another program wrote is capped (`safefs.ReadCapped`, `httpkit.DoCapped`), and an over-cap error wraps `safefs.ErrTooLarge`.
 - Folders come from the caller, except `Bases`, the one per-OS answer: on Linux it uses `userdirs.HostConfigHome` or `HostDataHome`, so inside a Flatpak the manager's folder is the host's and the sandbox's own folder, which holds no other manager's data, is never searched.
-- The module reads and never writes: the `.r2z` writer stays with its caller until a second caller needs a
-  `WriteExport`.
+- The module reads the other managers' files and never writes them. The one writer is `r2modman.WriteExport`, which builds an `.r2z` body from an `Export` for a caller to share; it never touches a manager's folders.
 - `gale` opens SQLite itself through CGO-free `modernc.org/sqlite` and takes no `*sql.DB`, because every caller that
   reads Gale needs a SQLite driver anyway.
 - Fixtures are synthetic, built in the test or hand-written. No file another manager wrote is checked in: the
@@ -35,7 +34,7 @@ Windows-only behaviour runs: `vortex`'s `TestReadReportsLocked` and the readers'
 | `vortex/locked_*.go` | Which error means another process holds a file open |
 | `mo2/mo2.go` | Instance folders, `ModOrganizer.ini` paths, modlist, `meta.ini` |
 | `stardrop/stardrop.go` | Profile files and `Settings.json` |
-| `r2modman/export.go` | `.r2z` reading and its admission |
+| `r2modman/export.go` | `.r2z` reading and its admission, `WriteExport`, `ParseVersion` |
 | `r2modman/code.go` | Profile codes and the Thunderstore client |
 | `r2modman/profile.go` | Profile folders, `BepInEx/config`, data folders |
 | `gale/gale.go` | The profiles table, data folders, mods JSON |

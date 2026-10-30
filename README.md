@@ -26,7 +26,7 @@ A worked example and the contracts: [HUMANS.md](HUMANS.md).
 - `vortex`: profiles, mods and staging folder from `state.v2`, read from a private copy.
 - `mo2`: instance folders, `[Settings]` paths, `modlist.txt` and `meta.ini`.
 - `stardrop`: profile JSON and the mods folder from `Settings.json`.
-- `r2modman`: `.r2z` exports and profile codes read under go-archive's admission rules, profile folders, data folders per OS.
+- `r2modman`: `.r2z` exports (read and write) and profile codes read under go-archive's admission rules, profile folders, data folders per OS.
 - `gale`: the profiles table read-only, and sync codes from an id, a copied link or a `gale://` deep link.
 
 ## Documentation

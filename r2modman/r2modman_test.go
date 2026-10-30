@@ -376,3 +376,43 @@ func FuzzModsYML(f *testing.F) {
 		}
 	})
 }
+
+func TestWriteExportRoundTrip(t *testing.T) {
+	in := Export{
+		ProfileName: "My Profile",
+		Community:   "lethal-company",
+		Mods: []Mod{
+			{Name: "BepInEx-BepInExPack", Version: Version{5, 4, 2100}, Enabled: true},
+			{Name: "Author-Off", Version: Version{1, 0, 0}, Enabled: false},
+		},
+		Files: map[string][]byte{"config/a.cfg": []byte("x"), "BepInEx/config/b.cfg": []byte("y")},
+	}
+	z, err := WriteExport(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := ReadExport(z)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out.ProfileName != in.ProfileName || out.Community != in.Community || !slices.Equal(out.Mods, in.Mods) {
+		t.Errorf("round trip = %+v, want %+v", out, in)
+	}
+	if len(out.Files) != 2 || string(out.Files["config/a.cfg"]) != "x" {
+		t.Errorf("files = %v", out.Files)
+	}
+	if _, err := WriteExport(Export{Files: map[string][]byte{"export.r2x": nil}}); err == nil {
+		t.Error("a Files entry named export.r2x was written")
+	}
+}
+
+func TestParseVersion(t *testing.T) {
+	if v, err := ParseVersion("1.20.3"); err != nil || v != (Version{1, 20, 3}) {
+		t.Errorf("ParseVersion = %v, %v", v, err)
+	}
+	for _, s := range []string{"", "1.2", "1.2.3.4", "1.x.3", "1.-2.3", "1..3", "+1.2.3", "99999999999999999999.0.0"} {
+		if _, err := ParseVersion(s); err == nil {
+			t.Errorf("ParseVersion(%q) accepted", s)
+		}
+	}
+}
