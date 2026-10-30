@@ -6,6 +6,8 @@ Notable changes to `go-modmanagers`. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-30
+
 ### Added
 
 - `r2modman.WriteExport` builds an `.r2z` body that `ReadExport` reads back, and `r2modman.ParseVersion` reads a `major.minor.patch` string into a `Version`.
@@ -20,5 +22,6 @@ Notable changes to `go-modmanagers`. The format follows
 - `stardrop`: list and read Stardrop profiles (both enabled-mod shapes, preserved configs, Nexus ids) and resolve its mods folder from `Settings.json`.
 - `mo2`: open any Mod Organizer 2 instance folder with its configurable mods and profiles folders resolved, list profiles, read `modlist.txt` and `meta.ini`.
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-modmanagers/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Rethunk-Tech/go-modmanagers/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Rethunk-Tech/go-modmanagers/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Rethunk-Tech/go-modmanagers/releases/tag/v0.1.0
