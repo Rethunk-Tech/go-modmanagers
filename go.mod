@@ -14,7 +14,7 @@ require (
 	github.com/Rethunk-Tech/go-archive v0.2.0
 	github.com/Rethunk-Tech/go-desktopenv v0.4.0
 	github.com/Rethunk-Tech/go-httpkit v0.1.0
-	github.com/Rethunk-Tech/go-safefs v0.2.0
+	github.com/Rethunk-Tech/go-safefs v0.6.0
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d
 	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/sys v0.49.0
@@ -115,7 +115,7 @@ require (
 	github.com/golangci/misspell v0.8.0 // indirect
 	github.com/golangci/plugin-module-register v0.1.2 // indirect
 	github.com/golangci/revgrep v0.8.0 // indirect
-	github.com/golangci/rowserrcheck v0.0.0-20261101185801-5eae6341f100 // indirect
+	github.com/golangci/rowserrcheck v0.0.0-20261101210309-7f680fea35ce // indirect
 	github.com/golangci/swaggoswag v0.0.0-20250504205917-77f2aca3143e // indirect
 	github.com/golangci/unconvert v0.0.0-20250410112200-a129a6e6413e // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -239,9 +239,9 @@ require (
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.8.2 // indirect
-	modernc.org/libc v1.79.1 // indirect
+	modernc.org/libc v1.80.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
 	mvdan.cc/gofumpt v0.12.0 // indirect
-	mvdan.cc/unparam v0.0.0-20261011093844-7a2c2c0b7aa6 // indirect
+	mvdan.cc/unparam v0.0.0-20261102141913-394cd0a56cd5 // indirect
 )
