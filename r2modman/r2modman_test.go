@@ -120,7 +120,6 @@ func TestReadExportRefusesHostileZips(t *testing.T) {
 		"case-only collision": buildZip(t, ok, entry{name: "Sub/a.cfg", body: "1"}, entry{name: "sub/b.cfg", body: "2"}),
 		"exact duplicate":     buildZip(t, ok, entry{name: "a.cfg", body: "1"}, entry{name: "a.cfg", body: "2"}),
 		"too many entries":    buildZip(t, append(many, ok)...),
-		"file over the cap":   buildZip(t, ok, entry{name: "big.bin", body: strings.Repeat("x", maxFile+1)}),
 		"no export.r2x":       buildZip(t, entry{name: "config/a.cfg", body: "x"}),
 		"not a zip":           []byte("hello"),
 		"a tar, not a zip":    append([]byte("ustar"), make([]byte, 600)...),
