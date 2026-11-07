@@ -6,6 +6,14 @@ Notable changes to `go-modmanagers`. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `stardrop.ReadProfile` and `mo2.Instance.ReadModlist` refuse an id or profile name that is a path, and `mo2.ParseModlist` drops modlist names that are paths.
+- `gale` keeps a recorded profile path with `..` after the game slug as recorded instead of joining it onto the data folder.
+- Files read from other managers' folders (Vortex's database, `ModOrganizer.ini`, `modlist.txt`, `meta.ini`, Stardrop profiles and settings) are capped, and `r2modman.Configs` also caps the file count (4096) and total bytes (128 MiB).
+- `r2modman.Client.FetchCode` and `gale.Client.FetchCode` validate the key or id they put in the URL path, and refuse a redirect from https to http.
+- `r2modman.WriteExport` refuses a body `ReadExport` would not admit.
+
 ## [0.2.0] - 2026-10-30
 
 ### Added

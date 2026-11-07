@@ -168,6 +168,10 @@ func WriteExport(e Export) ([]byte, error) {
 	if err := zw.Close(); err != nil {
 		return nil, err
 	}
+	// The body must be one ReadExport admits, so the same rules judge the names and sizes here.
+	if _, err := readZip(buf.Bytes()); err != nil {
+		return nil, fmt.Errorf("export is not one ReadExport would read: %w", err)
+	}
 	return buf.Bytes(), nil
 }
 

@@ -49,12 +49,20 @@ type File struct {
 	Data []byte
 }
 
+const (
+	maxConfigFiles = 4096
+	maxConfigBytes = 128 << 20
+)
+
 // Configs reads every regular file below <profileDir>/BepInEx/config as "config/<rel>" (slash-separated), each at
-// most 16 MiB (a larger one wraps safefs.ErrTooLarge); none when the folder is missing. Gale profile folders share
+// most 16 MiB, at most 4096 files and 128 MiB together (more wraps safefs.ErrTooLarge); none when the folder is missing. Gale profile folders share
 // the layout.
 func Configs(profileDir string) ([]File, error) {
 	cfg := filepath.Join(profileDir, "BepInEx", "config")
-	var out []File
+	var (
+		out   []File
+		total int64
+	)
 	err := filepath.WalkDir(cfg, func(p string, e fs.DirEntry, err error) error {
 		if err != nil {
 			if p == cfg && errors.Is(err, fs.ErrNotExist) {
@@ -65,9 +73,15 @@ func Configs(profileDir string) ([]File, error) {
 		if !e.Type().IsRegular() {
 			return nil
 		}
+		if len(out) >= maxConfigFiles {
+			return fmt.Errorf("%s holds more than %d files: %w", cfg, maxConfigFiles, safefs.ErrTooLarge)
+		}
 		b, err := readCapped(p)
 		if err != nil {
 			return err
+		}
+		if total += int64(len(b)); total > maxConfigBytes {
+			return fmt.Errorf("%s holds more than %d bytes: %w", cfg, int64(maxConfigBytes), safefs.ErrTooLarge)
 		}
 		rel, _ := filepath.Rel(cfg, p)
 		out = append(out, File{Path: "config/" + filepath.ToSlash(rel), Data: b})

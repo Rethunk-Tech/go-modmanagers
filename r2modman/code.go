@@ -64,6 +64,10 @@ type Client struct {
 // a *httpkit.StatusError (httpkit.ErrNotFound and httpkit.ErrRateLimited match it); a body over MaxBytes is
 // safefs.ErrTooLarge. The deadline is the caller's context.
 func (c Client) FetchCode(ctx context.Context, key string) (string, error) {
+	key, ok := CodeKey(key)
+	if !ok {
+		return "", errors.New("not a profile code key")
+	}
 	base := c.BaseURL
 	if base == "" {
 		base = "https://thunderstore.io"
@@ -79,7 +83,7 @@ func (c Client) FetchCode(ctx context.Context, key string) (string, error) {
 	if c.UserAgent != "" {
 		req.Header.Set("User-Agent", c.UserAgent)
 	}
-	b, err := httpkit.DoCapped(c.HTTP, req, limit, nil)
+	b, err := httpkit.DoCapped(httpkit.WithRedirect(c.HTTP, httpkit.NoDowngrade), req, limit, nil)
 	if err != nil {
 		return "", err
 	}

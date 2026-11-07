@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -175,16 +176,21 @@ func TestCodes(t *testing.T) {
 
 func TestFetchCode(t *testing.T) {
 	t.Parallel()
-	const uuid = "0123abcd-0123-0123-0123-0123456789ab"
+	const (
+		uuid    = "0123abcd-0123-0123-0123-0123456789ab"
+		limited = "0123abcd-0123-0123-0123-000000000429"
+		boom    = "0123abcd-0123-0123-0123-000000000500"
+		missing = "0123abcd-0123-0123-0123-000000000404"
+	)
 	var agent string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		agent = r.UserAgent()
 		switch r.URL.Path {
 		case "/api/experimental/legacyprofile/get/" + uuid + "/":
 			_, _ = w.Write([]byte(CodePrefix + "\nAAAA"))
-		case "/api/experimental/legacyprofile/get/limited/":
+		case "/api/experimental/legacyprofile/get/" + limited + "/":
 			w.WriteHeader(http.StatusTooManyRequests)
-		case "/api/experimental/legacyprofile/get/boom/":
+		case "/api/experimental/legacyprofile/get/" + boom + "/":
 			w.WriteHeader(http.StatusInternalServerError)
 		default:
 			http.NotFound(w, r)
@@ -195,15 +201,18 @@ func TestFetchCode(t *testing.T) {
 	if got, err := c.FetchCode(t.Context(), uuid); err != nil || got != CodePrefix+"\nAAAA" || agent != "test-agent" {
 		t.Fatalf("got %q, %v, agent %q", got, err, agent)
 	}
-	if _, err := c.FetchCode(t.Context(), "missing"); !errors.Is(err, httpkit.ErrNotFound) {
+	if _, err := c.FetchCode(t.Context(), missing); !errors.Is(err, httpkit.ErrNotFound) {
 		t.Errorf("404: %v", err)
 	}
-	if _, err := c.FetchCode(t.Context(), "limited"); !errors.Is(err, httpkit.ErrRateLimited) {
+	if _, err := c.FetchCode(t.Context(), limited); !errors.Is(err, httpkit.ErrRateLimited) {
 		t.Errorf("429: %v", err)
 	}
 	var se *httpkit.StatusError
-	if _, err := c.FetchCode(t.Context(), "boom"); !errors.As(err, &se) || se.Code != http.StatusInternalServerError {
+	if _, err := c.FetchCode(t.Context(), boom); !errors.As(err, &se) || se.Code != http.StatusInternalServerError {
 		t.Errorf("500: %v", err)
+	}
+	if _, err := c.FetchCode(t.Context(), "../../../api/other"); err == nil {
+		t.Error("a key that is a path was fetched")
 	}
 	c.MaxBytes = 4
 	if _, err := c.FetchCode(t.Context(), uuid); !errors.Is(err, safefs.ErrTooLarge) {
@@ -400,6 +409,11 @@ func TestWriteExportRoundTrip(t *testing.T) {
 	if len(out.Files) != 2 || string(out.Files["config/a.cfg"]) != "x" {
 		t.Errorf("files = %v", out.Files)
 	}
+	for _, name := range []string{"../x", "/abs", "a:b", "C:/x", "dup/../x"} {
+		if _, err := WriteExport(Export{Files: map[string][]byte{name: []byte("x")}}); err == nil {
+			t.Errorf("WriteExport wrote the name %q, which ReadExport refuses", name)
+		}
+	}
 	if _, err := WriteExport(Export{Files: map[string][]byte{"export.r2x": nil}}); err == nil {
 		t.Error("a Files entry named export.r2x was written")
 	}
@@ -413,5 +427,16 @@ func TestParseVersion(t *testing.T) {
 		if _, err := ParseVersion(s); err == nil {
 			t.Errorf("ParseVersion(%q) accepted", s)
 		}
+	}
+}
+
+func TestConfigsCapsTheFileCount(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	for i := range maxConfigFiles + 1 {
+		write(t, filepath.Join(dir, "BepInEx", "config", strconv.Itoa(i)+".cfg"), "")
+	}
+	if _, err := Configs(dir); !errors.Is(err, safefs.ErrTooLarge) {
+		t.Fatalf("Configs = %v, want ErrTooLarge", err)
 	}
 }

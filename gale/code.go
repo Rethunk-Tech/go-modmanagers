@@ -3,6 +3,7 @@ package gale
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"regexp"
 	"strings"
@@ -44,7 +45,7 @@ func CodeID(text string) (id string, ok bool) {
 
 // Client reads sync codes from Gale's server.
 type Client struct {
-	HTTP      *http.Client // nil means http.DefaultClient; redirects are followed (to Thunderstore)
+	HTTP      *http.Client // nil means http.DefaultClient; redirects are followed (to Thunderstore), never from https to http
 	BaseURL   string       // "" means https://gale.kesomannen.com/api
 	UserAgent string
 	MaxBytes  int64 // 0 means 128 MiB
@@ -55,6 +56,10 @@ type Client struct {
 // httpkit.ErrRateLimited match it); a body over MaxBytes is safefs.ErrTooLarge. The deadline is the caller's
 // context.
 func (c Client) FetchCode(ctx context.Context, id string) ([]byte, error) {
+	id, ok := CodeID(id)
+	if !ok {
+		return nil, errors.New("not a Gale sync id")
+	}
 	base := c.BaseURL
 	if base == "" {
 		base = "https://gale.kesomannen.com/api"
@@ -70,5 +75,5 @@ func (c Client) FetchCode(ctx context.Context, id string) ([]byte, error) {
 	if c.UserAgent != "" {
 		req.Header.Set("User-Agent", c.UserAgent)
 	}
-	return httpkit.DoCapped(c.HTTP, req, limit, nil)
+	return httpkit.DoCapped(httpkit.WithRedirect(c.HTTP, httpkit.NoDowngrade), req, limit, nil)
 }

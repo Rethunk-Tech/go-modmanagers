@@ -109,6 +109,9 @@ func reachablePath(path, slug, dataDir string) string {
 	if at < 0 {
 		return path
 	}
+	if slices.Contains(parts[at:], "..") {
+		return path
+	}
 	moved := filepath.Join(append([]string{dataDir}, parts[at:]...)...)
 	if safefs.IsDir(moved) {
 		return moved

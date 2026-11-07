@@ -15,6 +15,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/Rethunk-Tech/go-modmanagers/internal/readcap"
+
 	safefs "github.com/Rethunk-Tech/go-safefs"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
@@ -101,7 +103,7 @@ func copyLevelDB(src, dst string) error {
 	}
 	slices.SortStableFunc(names, func(a, b string) int { return cmp.Compare(rank(a), rank(b)) })
 	for _, name := range names {
-		data, err := safefs.ReadFile(filepath.Join(src, name))
+		data, err := readcap.File(filepath.Join(src, name), maxDBFile)
 		if errors.Is(err, os.ErrNotExist) {
 			continue
 		}
@@ -372,3 +374,6 @@ func rawString(values map[string]json.RawMessage, keys ...string) string {
 	}
 	return ""
 }
+
+// maxDBFile bounds one file of Vortex's LevelDB copy; a table or log is a few MiB.
+const maxDBFile = 64 << 20

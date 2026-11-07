@@ -240,3 +240,34 @@ func FuzzMods(f *testing.F) {
 		}
 	})
 }
+
+func TestReachablePathKeepsDotDotOutOfTheDataFolder(t *testing.T) {
+	t.Parallel()
+	data := t.TempDir()
+	outside := filepath.Join(filepath.Dir(data), "victim-srv")
+	if err := os.MkdirAll(outside, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(outside) })
+	recorded := "/x/valheim/../../" + filepath.Base(outside)
+	if got := reachablePath(recorded, "valheim", data); got != recorded {
+		t.Fatalf("reachablePath = %q, want the recorded path unchanged", got)
+	}
+}
+
+func TestFetchCodeRefusesAnIDThatIsAPathAndAnHTTPSDowngrade(t *testing.T) {
+	t.Parallel()
+	if _, err := (Client{BaseURL: "http://127.0.0.1:1"}).FetchCode(t.Context(), "../../x"); err == nil {
+		t.Error("a path was fetched as an id")
+	}
+	plain := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("plain")) }))
+	t.Cleanup(plain.Close)
+	secure := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, plain.URL, http.StatusFound)
+	}))
+	t.Cleanup(secure.Close)
+	c := Client{BaseURL: secure.URL, HTTP: secure.Client()}
+	if _, err := c.FetchCode(t.Context(), "E5RG8F"); err == nil {
+		t.Error("a redirect from https to http was followed")
+	}
+}

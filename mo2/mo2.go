@@ -5,13 +5,15 @@ package mo2
 import (
 	"cmp"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/Rethunk-Tech/go-modmanagers/internal/readcap"
+
 	"github.com/Rethunk-Tech/go-modmanagers/internal/nexusurl"
-	safefs "github.com/Rethunk-Tech/go-safefs"
 )
 
 // Instances lists the global instance folders, <localAppData>/ModOrganizer/<name>. A missing folder has none.
@@ -45,7 +47,7 @@ type Instance struct {
 // QSettings wrote them (@ByteArray(...), quotes, backslash escapes); a relative path resolves against dir, so an
 // absolute dir gives absolute Mods and Profiles. A missing or unreadable ini is an error.
 func Open(dir string) (Instance, error) {
-	data, err := safefs.ReadFile(filepath.Join(dir, "ModOrganizer.ini"))
+	data, err := readcap.File(filepath.Join(dir, "ModOrganizer.ini"), readcap.MaxFile)
 	if err != nil {
 		return Instance{}, err
 	}
@@ -103,7 +105,10 @@ type Entry struct {
 
 // ReadModlist reads <in.Profiles>/<profile>/modlist.txt in file order, as ParseModlist reads it.
 func (in Instance) ReadModlist(profile string) ([]Entry, error) {
-	data, err := safefs.ReadFile(filepath.Join(in.Profiles, profile, "modlist.txt"))
+	if !readcap.PlainName(profile) {
+		return nil, fmt.Errorf("mo2 profile %q is not a folder name", profile)
+	}
+	data, err := readcap.File(filepath.Join(in.Profiles, profile, "modlist.txt"), readcap.MaxFile)
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +130,10 @@ func ParseModlist(data []byte) []Entry {
 		if flag != '+' && flag != '-' || strings.HasPrefix(name, "*") {
 			continue
 		}
+		// MO2 names a mod after a folder, so a name that is a path is not one of its entries.
+		if !readcap.PlainName(name) {
+			continue
+		}
 		item := Entry{Name: name, Enabled: flag == '+'}
 		if i, ok := seen[name]; ok {
 			out[i] = item
@@ -144,7 +153,7 @@ type Meta struct {
 
 // ReadMeta reads <modDir>/meta.ini. A missing or unreadable file is the zero Meta.
 func ReadMeta(modDir string) Meta {
-	data, err := safefs.ReadFile(filepath.Join(modDir, "meta.ini"))
+	data, err := readcap.File(filepath.Join(modDir, "meta.ini"), readcap.MaxFile)
 	if err != nil {
 		return Meta{}
 	}

@@ -5,12 +5,14 @@ import (
 	"cmp"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/Rethunk-Tech/go-modmanagers/internal/readcap"
+
 	"github.com/Rethunk-Tech/go-modmanagers/internal/nexusurl"
-	safefs "github.com/Rethunk-Tech/go-safefs"
 )
 
 // DataDir is <appData>/Stardrop/Data, where .NET's ApplicationData puts it (%APPDATA% on Windows, the XDG
@@ -91,11 +93,14 @@ func ProfileIDs(dataDir string) ([]string, error) {
 // ReadProfile reads <dataDir>/Profiles/<id>, with ".json" added when id has no extension. The name is trimmed and
 // falls back to the file stem.
 func ReadProfile(dataDir, id string) (Profile, error) {
+	if !readcap.PlainName(id) {
+		return Profile{}, fmt.Errorf("stardrop profile id %q is not a file name", id)
+	}
 	path := filepath.Join(dataDir, "Profiles", id)
 	if filepath.Ext(path) == "" {
 		path += ".json"
 	}
-	data, err := safefs.ReadFile(path)
+	data, err := readcap.File(path, readcap.MaxFile)
 	if err != nil {
 		return Profile{}, err
 	}
@@ -120,7 +125,7 @@ func parseProfile(data []byte, stem string) (Profile, error) {
 // ModsFolder is Settings.json ModFolderPath, else <SMAPIFolderPath>/Mods, else fallback, cleaned.
 func ModsFolder(dataDir, fallback string) string {
 	path := fallback
-	data, err := safefs.ReadFile(filepath.Join(dataDir, "Settings.json"))
+	data, err := readcap.File(filepath.Join(dataDir, "Settings.json"), readcap.MaxFile)
 	if err == nil {
 		var s struct {
 			ModFolderPath   string `json:"ModFolderPath"`

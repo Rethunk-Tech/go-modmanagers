@@ -67,3 +67,15 @@ func FuzzProfile(f *testing.F) {
 		}
 	})
 }
+
+func TestReadProfileRefusesAnIDThatIsAPath(t *testing.T) {
+	t.Parallel()
+	base := t.TempDir()
+	write(t, filepath.Join(base, "secret", "loot.json"), `{"name":"Pwned"}`)
+	data := filepath.Join(base, "data")
+	for _, id := range []string{"../../secret/loot", "..", ".", `a\b`, "a/b", "x.json:stream", ""} {
+		if _, err := ReadProfile(data, id); err == nil {
+			t.Errorf("ReadProfile(%q) read a file", id)
+		}
+	}
+}

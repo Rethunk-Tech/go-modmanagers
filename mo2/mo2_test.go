@@ -1,11 +1,15 @@
 package mo2
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/Rethunk-Tech/go-modmanagers/internal/readcap"
+	safefs "github.com/Rethunk-Tech/go-safefs"
 
 	"github.com/Rethunk-Tech/go-modmanagers/internal/testwrite"
 )
@@ -141,4 +145,27 @@ func FuzzOpen(f *testing.F) {
 			t.Fatalf("instance = %+v", in)
 		}
 	})
+}
+
+func TestModlistDropsNamesThatArePathsAndRefusesPathProfiles(t *testing.T) {
+	t.Parallel()
+	got := ParseModlist([]byte("+../../x\n-..\n+.\n+a/b\n+ok\n"))
+	if len(got) != 1 || got[0].Name != "ok" {
+		t.Fatalf("entries = %v, want only ok", got)
+	}
+	in := Instance{Profiles: t.TempDir()}
+	for _, profile := range []string{"..", "../x", `a\b`, ""} {
+		if _, err := in.ReadModlist(profile); err == nil {
+			t.Errorf("ReadModlist(%q) succeeded", profile)
+		}
+	}
+}
+
+func TestReadsAreCapped(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "ModOrganizer.ini"), strings.Repeat("x", readcap.MaxFile+1))
+	if _, err := Open(dir); !errors.Is(err, safefs.ErrTooLarge) {
+		t.Fatalf("Open = %v, want ErrTooLarge", err)
+	}
 }

@@ -22,8 +22,8 @@ Every file here was written by another program and every code was pasted by a us
 - `r2modman.Client.FetchCode`, `gale.Client.FetchCode`: a response over `MaxBytes` is refused while reading, not held whole.
 - `gale.Profiles`, `Profile.Mods`: a crafted database row or mods column must not panic or hide other rows.
 - `vortex.Read`: a crafted LevelDB value must not panic, and the live database is never opened for writing.
-- `mo2.Open`, `mo2.ParseModlist`, `stardrop.ReadProfile`: crafted INI, modlist or JSON must not panic.
+- `mo2.Open`, `mo2.ParseModlist`, `stardrop.ReadProfile`: crafted INI, modlist or JSON must not panic, and an id or profile name must not be a path out of its folder. Each read of another manager's file is capped (16 MiB; 64 MiB for a Vortex database file).
 
 ## What is out of scope
 
-The caller is trusted to decide which folders to read and what to do with the names and paths returned: a mod name is returned as written, not validated, and `gale.Profile.Path` and a Vortex mod folder are not checked to lie inside any root. SQLite's and LevelDB's own parsers are their projects' to secure. A file another manager keeps open for writing may read stale; that is intended.
+The caller is trusted to decide which folders to read and what to do with the names and paths returned: a mod name is returned as written (except a modlist name that is a path, which `mo2` drops), and `gale.Profile.Path` and a Vortex mod folder are not checked to lie inside any root. SQLite's and LevelDB's own parsers are their projects' to secure. A file another manager keeps open for writing may read stale; that is intended.
