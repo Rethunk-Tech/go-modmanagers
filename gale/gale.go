@@ -81,6 +81,10 @@ func Profiles(ctx context.Context, db string) ([]Profile, error) {
 		if err := rows.Scan(&p.Name, &p.Path, &p.Slug, &p.mods); err != nil {
 			return nil, err
 		}
+		// Gale never records a ".." element; a row that does is a crafted path to somewhere else, so it is not listed.
+		if slices.Contains(strings.FieldsFunc(p.Path, func(r rune) bool { return r == '/' || r == '\\' }), "..") {
+			continue
+		}
 		p.Path = reachablePath(p.Path, p.Slug, filepath.Dir(db))
 		out = append(out, p)
 	}

@@ -241,17 +241,22 @@ func FuzzMods(f *testing.F) {
 	})
 }
 
-func TestReachablePathKeepsDotDotOutOfTheDataFolder(t *testing.T) {
+// A recorded path with "..", even one that exists, must not become a profile folder Configs reads.
+func TestProfilesSkipARecordedPathWithDotDot(t *testing.T) {
 	t.Parallel()
-	data := t.TempDir()
-	outside := filepath.Join(filepath.Dir(data), "victim-srv")
-	if err := os.MkdirAll(outside, 0o750); err != nil {
+	dir := t.TempDir()
+	outside := filepath.Join(filepath.Dir(dir), "victim-srv")
+	if err := os.MkdirAll(filepath.Join(outside, "BepInEx", "config"), 0o750); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(outside) })
-	recorded := "/x/valheim/../../" + filepath.Base(outside)
-	if got := reachablePath(recorded, "valheim", data); got != recorded {
-		t.Fatalf("reachablePath = %q, want the recorded path unchanged", got)
+	file := buildDB(t, dir,
+		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Evil', '`+dir+"/valheim/../../victim-srv"+`', 'valheim', '[]')`,
+		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Moved', '/x/valheim/../../victim-srv', 'valheim', '[]')`,
+	)
+	got, err := Profiles(t.Context(), file)
+	if err != nil || len(got) != 0 {
+		t.Fatalf("profiles = %+v, %v; want none", got, err)
 	}
 }
 
