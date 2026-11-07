@@ -6,6 +6,8 @@ Notable changes to `go-modmanagers`. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-07
+
 ### Fixed
 
 - `stardrop.ReadProfile` and `mo2.Instance.ReadModlist` refuse an id or profile name that is a path, and `mo2.ParseModlist` drops modlist names that are paths.
@@ -30,6 +32,7 @@ Notable changes to `go-modmanagers`. The format follows
 - `stardrop`: list and read Stardrop profiles (both enabled-mod shapes, preserved configs, Nexus ids) and resolve its mods folder from `Settings.json`.
 - `mo2`: open any Mod Organizer 2 instance folder with its configurable mods and profiles folders resolved, list profiles, read `modlist.txt` and `meta.ini`.
 
-[Unreleased]: https://github.com/Rethunk-Tech/go-modmanagers/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/Rethunk-Tech/go-modmanagers/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/Rethunk-Tech/go-modmanagers/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Rethunk-Tech/go-modmanagers/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Rethunk-Tech/go-modmanagers/releases/tag/v0.1.0
