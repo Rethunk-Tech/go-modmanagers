@@ -9,6 +9,7 @@ Notable changes to `go-modmanagers`. The format follows
 ### Added
 
 - `r2modman.CreateCode` POSTs an `.r2z` to Thunderstore's legacy profile-create endpoint and returns the profile-code key.
+- `gale.ReadOnlySQLiteURI`: SQLite's read-only, immutable URI for a database path (Windows drive slash plus `mode=ro&immutable=1`).
 
 ## [0.2.1] - 2026-11-07
 

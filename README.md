@@ -27,7 +27,7 @@ A worked example and the contracts: [HUMANS.md](HUMANS.md).
 - `mo2`: instance folders, `[Settings]` paths, `modlist.txt` and `meta.ini`.
 - `stardrop`: profile JSON and the mods folder from `Settings.json`.
 - `r2modman`: `.r2z` exports (read and write) and profile codes read under go-archive's admission rules or created on Thunderstore, profile folders, data folders per OS.
-- `gale`: the profiles table read-only, and sync codes from an id, a copied link or a `gale://` deep link.
+- `gale`: the profiles table read-only, `ReadOnlySQLiteURI` for a database path, and sync codes from an id, a copied link or a `gale://` deep link.
 
 ## Documentation
 

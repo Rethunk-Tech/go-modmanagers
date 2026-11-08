@@ -103,7 +103,7 @@ func TestProfilesOfAMissingDatabaseListNothing(t *testing.T) {
 
 func TestReadOnlyURIGivesWindowsDrivesALeadingSlash(t *testing.T) {
 	t.Parallel()
-	if got := readOnlyURI("C:/Users/a b/data.sqlite3"); got != "file:///C:/Users/a%20b/data.sqlite3?mode=ro&immutable=1" {
+	if got := ReadOnlySQLiteURI("C:/Users/a b/data.sqlite3"); got != "file:///C:/Users/a%20b/data.sqlite3?mode=ro&immutable=1" {
 		t.Fatalf("uri = %q", got)
 	}
 }
