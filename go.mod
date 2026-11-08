@@ -11,10 +11,10 @@ tool (
 )
 
 require (
-	github.com/Rethunk-Tech/go-archive v0.2.0
-	github.com/Rethunk-Tech/go-desktopenv v0.6.0
-	github.com/Rethunk-Tech/go-httpkit v0.1.0
-	github.com/Rethunk-Tech/go-safefs v0.7.1
+	github.com/Rethunk-Tech/go-archive v0.3.0
+	github.com/Rethunk-Tech/go-desktopenv v0.9.0
+	github.com/Rethunk-Tech/go-httpkit v0.3.0
+	github.com/Rethunk-Tech/go-safefs v0.9.0
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d
 	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/sys v0.49.0
@@ -103,7 +103,7 @@ require (
 	github.com/go-xmlfmt/xmlfmt v1.1.3 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/godoc-lint/godoc-lint v0.11.4 // indirect
-	github.com/gofrs/flock v0.13.1 // indirect
+	github.com/gofrs/flock v0.13.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/golangci/asciicheck v0.5.0 // indirect
 	github.com/golangci/canonicalheader v0.0.0-20260928145534-e18e5c5a078f // indirect
@@ -207,7 +207,7 @@ require (
 	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tetafro/godot v1.5.6 // indirect
-	github.com/timakin/bodyclose v0.0.0-20260923065923-98ded9ab4ef2 // indirect
+	github.com/timakin/bodyclose v0.0.0-20261107224203-8bb60b19bea4 // indirect
 	github.com/timonwong/loggercheck v0.13.1 // indirect
 	github.com/tomarrell/wrapcheck/v2 v2.13.0 // indirect
 	github.com/tommy-muehle/go-mnd/v2 v2.5.1 // indirect
