@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/http/httptest"
@@ -217,6 +218,66 @@ func TestFetchCode(t *testing.T) {
 	c.MaxBytes = 4
 	if _, err := c.FetchCode(t.Context(), uuid); !errors.Is(err, safefs.ErrTooLarge) {
 		t.Errorf("cap: %v", err)
+	}
+}
+
+func TestCreateCode(t *testing.T) {
+	t.Parallel()
+	in := Export{
+		ProfileName: "Friends",
+		Mods:        []Mod{{Name: "Alice-MoreCompany", Version: Version{1, 2, 3}, Enabled: false}},
+		Files:       map[string][]byte{"config/a.cfg": []byte("x=1")},
+	}
+	z, err := WriteExport(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const want = "0123abcd-0123-0123-0123-0123456789ab"
+	var posted string
+	status, reply := http.StatusOK, want
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		posted = string(b)
+		if r.Method != http.MethodPost || r.URL.Path != "/api/experimental/legacyprofile/create/" ||
+			r.Header.Get("Content-Type") != "application/octet-stream" {
+			t.Errorf("request %s %s %s", r.Method, r.URL.Path, r.Header.Get("Content-Type"))
+		}
+		w.WriteHeader(status)
+		if reply == "" {
+			_, _ = io.WriteString(w, `{}`)
+			return
+		}
+		_, _ = fmt.Fprintf(w, `{"key":%q}`, reply)
+	}))
+	t.Cleanup(srv.Close)
+	key, err := CreateCode(t.Context(), srv.Client(), srv.URL, z)
+	if err != nil || key != want {
+		t.Fatalf("%q %v", key, err)
+	}
+	raw, err := DecodeCode(posted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := ReadExport(raw)
+	if err != nil || got.ProfileName != in.ProfileName || !slices.Equal(got.Mods, in.Mods) ||
+		string(got.Files["config/a.cfg"]) != "x=1" {
+		t.Fatalf("round trip: %+v %v", got, err)
+	}
+	status, reply = http.StatusCreated, "created"
+	if key, err := CreateCode(t.Context(), srv.Client(), srv.URL, z); err != nil || key != "created" {
+		t.Fatalf("201: %q %v", key, err)
+	}
+	status = http.StatusRequestEntityTooLarge
+	if _, err := CreateCode(t.Context(), srv.Client(), srv.URL, z); err == nil || err.Error() != "profile is too large to export as a code" {
+		t.Errorf("413: %v", err)
+	}
+	status = http.StatusInternalServerError
+	if _, err := CreateCode(t.Context(), srv.Client(), srv.URL, z); err == nil || !strings.Contains(err.Error(), "thunderstore answered") {
+		t.Errorf("500: %v", err)
+	}
+	status, reply = http.StatusOK, ""
+	if _, err := CreateCode(t.Context(), srv.Client(), srv.URL, z); err == nil || err.Error() != "thunderstore returned no profile key" {
+		t.Errorf("empty key: %v", err)
 	}
 }
 

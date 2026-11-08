@@ -3,6 +3,7 @@ package r2modman
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	httpkit "github.com/Rethunk-Tech/go-httpkit"
+	safefs "github.com/Rethunk-Tech/go-safefs"
 )
 
 // CodePrefix starts a pasted profile code.
@@ -88,4 +90,41 @@ func (c Client) FetchCode(ctx context.Context, key string) (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+// CreateCode stores zip (an .r2z body) on Thunderstore as a profile code and returns the key
+// (POST /api/experimental/legacyprofile/create/). hc nil means http.DefaultClient; base "" means
+// https://thunderstore.io. A 413 is "profile is too large to export as a code"; any other non-200/201
+// is "thunderstore answered ..."; a body with no key is "thunderstore returned no profile key".
+func CreateCode(ctx context.Context, hc *http.Client, base string, zip []byte) (string, error) {
+	body := CodePrefix + "\n" + base64.StdEncoding.EncodeToString(zip)
+	if base == "" {
+		base = "https://thunderstore.io"
+	}
+	if hc == nil {
+		hc = http.DefaultClient
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/api/experimental/legacyprofile/create/", strings.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/octet-stream")
+	resp, err := hc.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode == http.StatusRequestEntityTooLarge {
+		return "", errors.New("profile is too large to export as a code")
+	}
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return "", fmt.Errorf("thunderstore answered %s", resp.Status)
+	}
+	var out struct {
+		Key string `json:"key"`
+	}
+	if err := json.NewDecoder(safefs.CapReader(resp.Body, 1<<20)).Decode(&out); err != nil || out.Key == "" {
+		return "", errors.New("thunderstore returned no profile key")
+	}
+	return out.Key, nil
 }
