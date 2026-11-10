@@ -25,10 +25,12 @@ import (
 	safefs "github.com/Rethunk-Tech/go-safefs"
 )
 
-// entry is one zip entry; mode is applied when nonzero.
+// entry is one zip entry; mode is applied when nonzero. store writes the body uncompressed, for cases
+// about admission rules rather than decompression.
 type entry struct {
 	name, body string
 	mode       fs.FileMode
+	store      bool
 }
 
 func buildZip(t testing.TB, entries ...entry) []byte {
@@ -37,6 +39,9 @@ func buildZip(t testing.TB, entries ...entry) []byte {
 	zw := zip.NewWriter(&buf)
 	for _, e := range entries {
 		h := &zip.FileHeader{Name: e.name, Method: zip.Deflate}
+		if e.store {
+			h.Method = zip.Store
+		}
 		if e.mode != 0 {
 			h.SetMode(e.mode)
 		}
@@ -108,9 +113,11 @@ func TestReadExport(t *testing.T) {
 func TestReadExportRefusesHostileZips(t *testing.T) {
 	t.Parallel()
 	ok := entry{name: exportFile, body: export}
+	// Stored, not deflated: this case is about the entry count, and deflating 5001 entries spends a
+	// second of the race build's time on compression the reader never exercises.
 	var many []entry
 	for i := range maxEntries + 1 {
-		many = append(many, entry{name: fmt.Sprintf("f%d", i)})
+		many = append(many, entry{name: fmt.Sprintf("f%d", i), store: true})
 	}
 	cases := map[string][]byte{
 		"traversal":           buildZip(t, ok, entry{name: "../evil", body: "x"}),
@@ -132,7 +139,8 @@ func TestReadExportRefusesHostileZips(t *testing.T) {
 			t.Errorf("%s: accepted", name)
 		}
 	}
-	if _, err := ReadExport(buildZip(t, ok, entry{name: "big.bin", body: strings.Repeat("x", maxFile+1)})); !errors.Is(err, archive.ErrEntryTooLarge) {
+	// Stored too: deflating 16 MiB is a fifth of this test's time, and the cap is on the declared size.
+	if _, err := ReadExport(buildZip(t, ok, entry{name: "big.bin", body: strings.Repeat("x", maxFile+1), store: true})); !errors.Is(err, archive.ErrEntryTooLarge) {
 		t.Errorf("oversize file error = %v", err)
 	}
 }
@@ -494,8 +502,16 @@ func TestParseVersion(t *testing.T) {
 func TestConfigsCapsTheFileCount(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
+	cfg := filepath.Join(dir, "BepInEx", "config")
+	if err := os.MkdirAll(cfg, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	// Written directly: each write's own MkdirAll of a folder that exists costs more than the walk under
+	// the race detector, and the cap is about how many files the walk meets.
 	for i := range maxConfigFiles + 1 {
-		write(t, filepath.Join(dir, "BepInEx", "config", strconv.Itoa(i)+".cfg"), "")
+		if err := os.WriteFile(filepath.Join(cfg, strconv.Itoa(i)+".cfg"), nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if _, err := Configs(dir); !errors.Is(err, safefs.ErrTooLarge) {
 		t.Fatalf("Configs = %v, want ErrTooLarge", err)

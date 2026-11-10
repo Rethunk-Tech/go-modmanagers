@@ -9,8 +9,10 @@
 [gates.lint]
 run = "GOGC=400 go tool golangci-lint run --allow-parallel-runners ./..."
 
+# govulncheck is the slowest gate on a warm cache and is CPU-bound the same way: at the default GOGC it
+# spends about a third of its CPU in GC, and about 400 MB more RSS buys that third back.
 [gates.vuln]
-run = "go tool govulncheck ./..."
+run = "GOGC=400 go tool govulncheck ./..."
 
 # No-op in CI, like gitleaks: the pre-push hook already ran this gate on every pushed commit, and a runner's
 # download of the pinned binary fails the whole run whenever GitHub release downloads answer 504.
