@@ -9,8 +9,8 @@
 [gates.lint]
 run = "GOGC=400 go tool golangci-lint run --allow-parallel-runners ./..."
 
-# govulncheck is the slowest gate on a warm cache and is CPU-bound the same way: at the default GOGC it
-# spends about a third of its CPU in GC, and about 400 MB more RSS buys that third back.
+# govulncheck is the slowest gate on a warm cache and is CPU-bound the same way: at the default GOGC
+# much of its CPU goes to GC, and a larger heap buys that back.
 [gates.vuln]
 run = "GOGC=400 go tool govulncheck ./..."
 
