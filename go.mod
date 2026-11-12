@@ -11,7 +11,7 @@ tool (
 )
 
 require (
-	github.com/Rethunk-Tech/go-archive v0.3.0
+	github.com/Rethunk-Tech/go-archive v0.3.1
 	github.com/Rethunk-Tech/go-desktopenv v0.9.1
 	github.com/Rethunk-Tech/go-httpkit v0.3.0
 	github.com/Rethunk-Tech/go-safefs v0.9.0
@@ -229,7 +229,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
 	go4.org v0.0.0-20261028031214-ed6929a230fe // indirect
-	golang.org/x/exp/typeparams v0.0.0-20261112171230-a396fd43068f // indirect
+	golang.org/x/exp/typeparams v0.0.0-20261112173441-d10d3b464990 // indirect
 	golang.org/x/mod v0.43.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/telemetry v0.0.0-20261111153349-cdaf7e97dd7b // indirect
