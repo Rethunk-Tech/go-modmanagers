@@ -41,3 +41,5 @@ Windows-only behaviour runs: `vortex`'s `TestReadReportsLocked` and the readers'
 | `gale/code.go` | Sync-code ids and the sync client |
 | `internal/managerbase` | The per-OS base folder shared by `r2modman` and `gale` |
 | `internal/nexusurl` | The Nexus mod id in a mod-page URL |
+| `internal/readcap` | Capped reads of files another program wrote, and whether a name is one path element |
+| `internal/testwrite` | Test fixture files |
