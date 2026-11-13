@@ -56,7 +56,7 @@ func TestProfiles(t *testing.T) {
 			{"enabled":true,"fullName":"BepInEx-BepInExPack-5.4.2100","packageUuid":"u","versionUuid":"v"},
 			{"enabled":false,"fullName":"Alice-MoreCompany-1.2.3"},
 			{"name":"Mine","author":"Me","version":"0.1.0","dependencies":["A-B-1.0.0"],"uuid":"x"}]', '--x')`,
-		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Other', '/elsewhere', 'risk-of-rain-2', '[')`,
+		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Other', '`+filepath.Join(dir, "risk-of-rain-2", "profiles", "Other")+`', 'risk-of-rain-2', '[')`,
 		// Recorded at a host path this process cannot reach, as a Flatpak sees a data folder opened through the portal.
 		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Moved', '/mnt/gone/lethal-company/profiles/Moved', 'lethal-company', '[]')`,
 	)
@@ -67,7 +67,7 @@ func TestProfiles(t *testing.T) {
 	if got[0].Name != "Crew" || got[0].Slug != "lethal-company" || got[0].Path != profile {
 		t.Fatalf("crew = %+v", got[0])
 	}
-	if got[2].Path != moved || got[1].Path != "/elsewhere" {
+	if got[2].Path != moved || got[1].Path != filepath.Join(dir, "risk-of-rain-2", "profiles", "Other") {
 		t.Fatalf("paths: moved %q, other %q", got[2].Path, got[1].Path)
 	}
 	mods, err := got[0].Mods()
@@ -319,5 +319,26 @@ func TestFetchCodeRefusesAnIDThatIsAPathAndAnHTTPSDowngrade(t *testing.T) {
 	c := Client{BaseURL: secure.URL, HTTP: secure.Client()}
 	if _, err := c.FetchCode(t.Context(), "E5RG8F"); err == nil {
 		t.Error("a redirect from https to http was followed")
+	}
+}
+
+func TestProfilesSkipAMissingPathOutsideAndALinkPointingOut(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	outside := t.TempDir()
+	link := filepath.Join(dir, "valheim", "profiles", "Link")
+	if err := os.MkdirAll(filepath.Dir(link), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, link); err != nil {
+		t.Skip(err)
+	}
+	file := buildDB(t, dir,
+		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Link', '`+link+`', 'valheim', '[]')`,
+		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Gone', '/nonexistent-elsewhere/Gone', 'valheim', '[]')`,
+	)
+	got, err := Profiles(t.Context(), file)
+	if err != nil || len(got) != 0 {
+		t.Fatalf("profiles = %+v, %v; want none", got, err)
 	}
 }
