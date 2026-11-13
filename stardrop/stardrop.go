@@ -135,7 +135,8 @@ func parseProfile(data []byte, stem string) (Profile, error) {
 	return p, nil
 }
 
-// ModsFolder is Settings.json ModFolderPath, else <SMAPIFolderPath>/Mods, else fallback, cleaned.
+// ModsFolder is Settings.json ModFolderPath, else <SMAPIFolderPath>/Mods, else fallback, cleaned. A relative setting
+// is relative to dataDir, not to the caller's working directory.
 func ModsFolder(dataDir, fallback string) string {
 	path := fallback
 	data, err := readcap.File(filepath.Join(dataDir, "Settings.json"), readcap.MaxFile)
@@ -149,6 +150,9 @@ func ModsFolder(dataDir, fallback string) string {
 				path = s.ModFolderPath
 			} else if s.SMAPIFolderPath != "" {
 				path = filepath.Join(s.SMAPIFolderPath, "Mods")
+			}
+			if path != fallback && !filepath.IsAbs(path) {
+				path = filepath.Join(dataDir, path)
 			}
 		}
 	}

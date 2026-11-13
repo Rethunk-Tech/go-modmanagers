@@ -56,6 +56,15 @@ func TestModsFolderPrecedence(t *testing.T) {
 	}
 }
 
+func TestModsFolderResolvesARelativeSettingAgainstTheDataFolder(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	write(t, filepath.Join(dir, "Settings.json"), `{"ModFolderPath":"Mods"}`)
+	if got := ModsFolder(dir, "fb"); got != filepath.Join(dir, "Mods") {
+		t.Fatalf("relative = %q", got)
+	}
+}
+
 func FuzzProfile(f *testing.F) {
 	f.Add([]byte(`{"Name":"n","EnabledModIds":["a",{"UniqueId":"b"}],"ModData":[{}],"PreservedModConfigs":{"x":null}}`))
 	f.Add([]byte(`{"EnabledModIds":[1]}`))
