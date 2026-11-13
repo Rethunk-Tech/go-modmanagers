@@ -3,6 +3,7 @@ package stardrop
 import (
 	"path/filepath"
 	"slices"
+	"strconv"
 	"testing"
 
 	"github.com/Rethunk-Tech/go-modmanagers/internal/testwrite"
@@ -46,12 +47,17 @@ func TestModsFolderPrecedence(t *testing.T) {
 	if got := ModsFolder(dir, fallback); got != filepath.Join(dir, "game") {
 		t.Fatalf("fallback = %q", got)
 	}
-	write(t, filepath.Join(dir, "Settings.json"), `{"SMAPIFolderPath":"/smapi"}`)
-	if got := ModsFolder(dir, fallback); got != filepath.Join("/smapi", "Mods") {
+	abs, err := filepath.Abs(string(filepath.Separator))
+	if err != nil {
+		t.Fatal(err)
+	}
+	smapi, mods := filepath.Join(abs, "smapi"), filepath.Join(abs, "mods")
+	write(t, filepath.Join(dir, "Settings.json"), `{"SMAPIFolderPath":`+strconv.Quote(smapi)+`}`)
+	if got := ModsFolder(dir, fallback); got != filepath.Join(smapi, "Mods") {
 		t.Fatalf("smapi = %q", got)
 	}
-	write(t, filepath.Join(dir, "Settings.json"), `{"SMAPIFolderPath":"/smapi","ModFolderPath":"/mods/"}`)
-	if got := ModsFolder(dir, fallback); got != filepath.Clean("/mods") {
+	write(t, filepath.Join(dir, "Settings.json"), `{"SMAPIFolderPath":`+strconv.Quote(smapi)+`,"ModFolderPath":`+strconv.Quote(mods+string(filepath.Separator))+`}`)
+	if got := ModsFolder(dir, fallback); got != mods {
 		t.Fatalf("mods = %q", got)
 	}
 }
