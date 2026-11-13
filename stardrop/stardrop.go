@@ -96,10 +96,21 @@ func ReadProfile(dataDir, id string) (Profile, error) {
 	if !readcap.PlainName(id) {
 		return Profile{}, fmt.Errorf("stardrop profile id %q is not a file name", id)
 	}
-	path := filepath.Join(dataDir, "Profiles", id)
-	if filepath.Ext(path) == "" {
-		path += ".json"
+	dir := filepath.Join(dataDir, "Profiles")
+	name := id
+	if filepath.Ext(id) == "" {
+		name = id + ".json"
+		if entries, err := os.ReadDir(dir); err == nil {
+			for _, e := range entries {
+				ext := filepath.Ext(e.Name())
+				if !e.IsDir() && strings.EqualFold(ext, ".json") && strings.TrimSuffix(e.Name(), ext) == id {
+					name = e.Name()
+					break
+				}
+			}
+		}
 	}
+	path := filepath.Join(dir, name)
 	data, err := readcap.File(path, readcap.MaxFile)
 	if err != nil {
 		return Profile{}, err

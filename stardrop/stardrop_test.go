@@ -30,7 +30,7 @@ func TestProfiles(t *testing.T) {
 	if err != nil || farm.Name != "Farm" || !slices.Equal(farm.EnabledModIDs, []string{"A.One", "B.Two"}) || farm.ModData[0].NexusID() != 12 {
 		t.Fatalf("farm = %+v, %v", farm, err)
 	}
-	kept, err := ReadProfile(data, "Kept.JSON")
+	kept, err := ReadProfile(data, "Kept")
 	if err != nil || kept.Name != "Kept" || !slices.Equal(kept.EnabledModIDs, []string{"C.Three"}) || string(kept.PreservedModConfigs["c.three"]) != `{"Volume":3}` {
 		t.Fatalf("kept = %+v, %v", kept, err)
 	}
