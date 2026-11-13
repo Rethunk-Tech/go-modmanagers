@@ -87,15 +87,11 @@ func TestProfiles(t *testing.T) {
 
 func TestProfilesReportsAStatErrorOtherThanMissing(t *testing.T) {
 	t.Parallel()
-	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
-		t.Skip("a directory mode of 0 does not block Stat of a child")
-	}
-	blocked := filepath.Join(t.TempDir(), "nope")
-	if err := os.Mkdir(blocked, 0); err != nil {
+	parent := filepath.Join(t.TempDir(), "not-a-dir")
+	if err := os.WriteFile(parent, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(blocked, 0o750) })
-	got, err := Profiles(t.Context(), filepath.Join(blocked, "data.sqlite3"))
+	got, err := Profiles(t.Context(), filepath.Join(parent, "data.sqlite3"))
 	if err == nil || got != nil {
 		t.Fatalf("Profiles = %v, %v; want an error", got, err)
 	}
@@ -126,14 +122,7 @@ func TestProfilesOpensARelativeDatabasePath(t *testing.T) {
 	buildDB(t, dir,
 		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Crew', '`+strings.ReplaceAll(profile, "'", "''")+`', 'lethal-company', '[]')`,
 	)
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(wd) })
+	t.Chdir(dir)
 	got, err := Profiles(t.Context(), "data.sqlite3")
 	if err != nil || len(got) != 1 || got[0].Name != "Crew" {
 		t.Fatalf("profiles = %+v, %v", got, err)

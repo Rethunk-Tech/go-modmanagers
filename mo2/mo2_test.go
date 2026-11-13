@@ -97,8 +97,8 @@ func TestModlist(t *testing.T) {
 func TestInstancesListsASymlinkToADirectory(t *testing.T) {
 	t.Parallel()
 	local := t.TempDir()
-	real := filepath.Join(t.TempDir(), "moved")
-	if err := os.MkdirAll(real, 0o750); err != nil {
+	moved := filepath.Join(t.TempDir(), "moved")
+	if err := os.MkdirAll(moved, 0o750); err != nil {
 		t.Fatal(err)
 	}
 	root := filepath.Join(local, "ModOrganizer")
@@ -106,7 +106,7 @@ func TestInstancesListsASymlinkToADirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 	link := filepath.Join(root, "Inst")
-	if err := os.Symlink(real, link); err != nil {
+	if err := os.Symlink(moved, link); err != nil {
 		t.Fatal(err)
 	}
 	got, err := Instances(local)
