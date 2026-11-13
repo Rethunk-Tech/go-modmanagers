@@ -94,6 +94,39 @@ func TestModlist(t *testing.T) {
 	}
 }
 
+func TestInstancesListsASymlinkToADirectory(t *testing.T) {
+	t.Parallel()
+	local := t.TempDir()
+	real := filepath.Join(t.TempDir(), "moved")
+	if err := os.MkdirAll(real, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	root := filepath.Join(local, "ModOrganizer")
+	if err := os.MkdirAll(root, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(root, "Inst")
+	if err := os.Symlink(real, link); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Instances(local)
+	if err != nil || !slices.Equal(got, []string{link}) {
+		t.Fatalf("instances = %v, %v", got, err)
+	}
+	in := Instance{Profiles: t.TempDir()}
+	target := filepath.Join(t.TempDir(), "Default")
+	if err := os.MkdirAll(target, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, filepath.Join(in.Profiles, "Default")); err != nil {
+		t.Fatal(err)
+	}
+	names, err := in.ProfileNames()
+	if err != nil || !slices.Equal(names, []string{"Default"}) {
+		t.Fatalf("names = %v, %v", names, err)
+	}
+}
+
 func TestInstancesAndMeta(t *testing.T) {
 	t.Parallel()
 	local := t.TempDir()

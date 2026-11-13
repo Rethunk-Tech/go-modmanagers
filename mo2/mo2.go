@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/Rethunk-Tech/go-modmanagers/internal/readcap"
+	"github.com/Rethunk-Tech/go-safefs"
 
 	"github.com/Rethunk-Tech/go-modmanagers/internal/nexusurl"
 )
@@ -28,8 +29,9 @@ func Instances(localAppData string) ([]string, error) {
 	}
 	var out []string
 	for _, e := range entries {
-		if e.IsDir() {
-			out = append(out, filepath.Join(root, e.Name()))
+		p := filepath.Join(root, e.Name())
+		if safefs.IsDir(p) {
+			out = append(out, p)
 		}
 	}
 	return out, nil
@@ -90,7 +92,7 @@ func (in Instance) ProfileNames() ([]string, error) {
 	}
 	var out []string
 	for _, e := range entries {
-		if e.IsDir() {
+		if safefs.IsDir(filepath.Join(in.Profiles, e.Name())) {
 			out = append(out, e.Name())
 		}
 	}
