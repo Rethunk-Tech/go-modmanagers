@@ -299,7 +299,13 @@ var placeholder = regexp.MustCompile(`(?i)\{(userdata|username|game)\}`)
 // "{USERDATA}/{GAME}/mods", and a relative result is relative to the data dir. {USERNAME} is the last segment of
 // the OS user's name.
 func (s *State) StagingFolder(gameID string) string {
-	pattern := rawString(objectValue(objectValue(objectValue(s.tree, "settings"), "mods"), "installPath"), gameID)
+	var pattern string
+	for id, raw := range objectValue(objectValue(objectValue(s.tree, "settings"), "mods"), "installPath") {
+		if strings.EqualFold(id, gameID) {
+			_ = json.Unmarshal(raw, &pattern)
+			break
+		}
+	}
 	pattern = cmp.Or(pattern, installPattern)
 	expanded := placeholder.ReplaceAllStringFunc(pattern, func(m string) string {
 		switch strings.ToLower(m[1 : len(m)-1]) {

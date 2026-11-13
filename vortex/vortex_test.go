@@ -150,6 +150,25 @@ func TestStagingFolderDefaultsAndPlaceholders(t *testing.T) {
 	}
 }
 
+func TestStagingFolderMatchesGameIDCaseInsensitively(t *testing.T) {
+	t.Parallel()
+	outside := filepath.Join(t.TempDir(), "staging")
+	dir := newData(t, map[string]string{
+		"settings###mods###installPath###stardewvalley": `"` + filepath.ToSlash(outside) + `"`,
+		"persistent###mods###stardewvalley###m###id":    `"m"`,
+	})
+	s, err := Read(dir, Options{TempDir: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(s.Mods("StardewValley")) != 1 {
+		t.Fatalf("mods = %+v", s.Mods("StardewValley"))
+	}
+	if got := s.StagingFolder("StardewValley"); got != outside {
+		t.Fatalf("staging = %q want %q (default %q)", got, outside, filepath.Join(dir, "StardewValley", "mods"))
+	}
+}
+
 func TestNestedProfilesDecodeIndependently(t *testing.T) {
 	t.Parallel()
 	s, err := Read(newData(t, map[string]string{"persistent###profiles": `{"stardewvalley":{
