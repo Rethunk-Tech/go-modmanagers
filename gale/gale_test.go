@@ -101,6 +101,29 @@ func TestProfilesOfAMissingDatabaseListNothing(t *testing.T) {
 	}
 }
 
+func TestProfilesOpensARelativeDatabasePath(t *testing.T) {
+	dir := t.TempDir()
+	profile := filepath.Join(dir, "lethal-company", "profiles", "Crew")
+	if err := os.MkdirAll(profile, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	buildDB(t, dir,
+		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Crew', '`+strings.ReplaceAll(profile, "'", "''")+`', 'lethal-company', '[]')`,
+	)
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	got, err := Profiles(t.Context(), "data.sqlite3")
+	if err != nil || len(got) != 1 || got[0].Name != "Crew" {
+		t.Fatalf("profiles = %+v, %v", got, err)
+	}
+}
+
 func TestReadOnlyURIGivesWindowsDrivesALeadingSlash(t *testing.T) {
 	t.Parallel()
 	if got := ReadOnlySQLiteURI("C:/Users/a b/data.sqlite3"); got != "file:///C:/Users/a%20b/data.sqlite3?mode=ro&immutable=1" {

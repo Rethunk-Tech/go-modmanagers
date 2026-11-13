@@ -62,6 +62,9 @@ func Profiles(ctx context.Context, db string) ([]Profile, error) {
 	if db == "" {
 		return nil, nil
 	}
+	if abs, err := filepath.Abs(db); err == nil {
+		db = abs
+	}
 	if _, err := safefs.Stat(db); err != nil {
 		return nil, nil
 	}
@@ -100,6 +103,11 @@ func Profiles(ctx context.Context, db string) ([]Profile, error) {
 // path ("C:/...") needs the leading slash too, or SQLite takes the drive for the URI's authority and refuses it.
 func ReadOnlySQLiteURI(db string) string {
 	p := filepath.ToSlash(db)
+	if !strings.HasPrefix(p, "/") && (len(p) < 2 || p[1] != ':') {
+		if abs, err := filepath.Abs(db); err == nil {
+			p = filepath.ToSlash(abs)
+		}
+	}
 	if len(p) > 1 && p[1] == ':' {
 		p = "/" + p
 	}
