@@ -122,12 +122,17 @@ func ReadOnlySQLiteURI(db string) string {
 // reachablePath is a profile's folder as this process can reach it. Gale records the absolute path it used, below
 // <data dir>/<game slug>; when that path is not here (a Flatpak reaching the data folder through the document
 // portal, or a data folder since moved) the same folder below the database's own folder is used.
-// realPath is path with its symlinks resolved when it exists, else path as given.
+// realPath is path with its symlinks resolved; a missing tail is kept as given below its nearest existing parent, so a
+// missing path and an existing root compare in the same spelling (Windows 8.3 short names included).
 func realPath(path string) string {
 	if r, err := filepath.EvalSymlinks(path); err == nil {
 		return r
 	}
-	return path
+	parent := filepath.Dir(path)
+	if parent == path {
+		return path
+	}
+	return filepath.Join(realPath(parent), filepath.Base(path))
 }
 
 func inside(root, path string) bool {

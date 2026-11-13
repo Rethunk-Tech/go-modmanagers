@@ -342,3 +342,19 @@ func TestProfilesSkipAMissingPathOutsideAndALinkPointingOut(t *testing.T) {
 		t.Fatalf("profiles = %+v, %v; want none", got, err)
 	}
 }
+
+func TestProfilesKeepAMissingPathReachedThroughALinkedDataFolder(t *testing.T) {
+	t.Parallel()
+	target := t.TempDir()
+	link := filepath.Join(t.TempDir(), "data")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skip(err)
+	}
+	missing := filepath.Join(link, "valheim", "profiles", "Gone")
+	file := buildDB(t, link,
+		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Gone', '`+missing+`', 'valheim', '[]')`)
+	got, err := Profiles(t.Context(), file)
+	if err != nil || len(got) != 1 {
+		t.Fatalf("profiles = %+v, %v; want the missing profile kept", got, err)
+	}
+}
