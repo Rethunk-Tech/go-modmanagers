@@ -86,6 +86,10 @@ func Profiles(ctx context.Context, db string) ([]Profile, error) {
 			continue
 		}
 		p.Path = reachablePath(p.Path, p.Slug, filepath.Dir(db))
+		// Configs will read this folder; an existing directory outside the database's tree is not a Gale profile.
+		if safefs.IsDir(p.Path) && !inside(filepath.Dir(db), p.Path) {
+			continue
+		}
 		out = append(out, p)
 	}
 	return out, rows.Err()
@@ -105,8 +109,13 @@ func ReadOnlySQLiteURI(db string) string {
 // reachablePath is a profile's folder as this process can reach it. Gale records the absolute path it used, below
 // <data dir>/<game slug>; when that path is not here (a Flatpak reaching the data folder through the document
 // portal, or a data folder since moved) the same folder below the database's own folder is used.
+func inside(root, path string) bool {
+	rel, err := filepath.Rel(filepath.Clean(root), filepath.Clean(path))
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
 func reachablePath(path, slug, dataDir string) string {
-	if safefs.IsDir(path) {
+	if safefs.IsDir(path) && inside(dataDir, path) {
 		return path
 	}
 	parts := strings.FieldsFunc(path, func(r rune) bool { return r == '/' || r == '\\' })

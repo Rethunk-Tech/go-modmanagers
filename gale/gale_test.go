@@ -241,6 +241,23 @@ func FuzzMods(f *testing.F) {
 	})
 }
 
+// A recorded path that exists outside the data folder, even with no "..", must not become a profile folder Configs reads.
+func TestProfilesSkipARecordedPathOutsideTheDataFolder(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	outside := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(outside, "BepInEx", "config"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	file := buildDB(t, dir,
+		`INSERT INTO profiles (name, path, game_slug, mods) VALUES ('Evil', '`+strings.ReplaceAll(outside, "'", "''")+`', 'valheim', '[]')`,
+	)
+	got, err := Profiles(t.Context(), file)
+	if err != nil || len(got) != 0 {
+		t.Fatalf("profiles = %+v, %v; want none", got, err)
+	}
+}
+
 // A recorded path with "..", even one that exists, must not become a profile folder Configs reads.
 func TestProfilesSkipARecordedPathWithDotDot(t *testing.T) {
 	t.Parallel()
