@@ -161,7 +161,7 @@ func ReadMeta(modDir string) Meta {
 	}
 	general := iniSection(data, "general")
 	id, _ := strconv.Atoi(strings.TrimSpace(general["modid"]))
-	if id == 0 {
+	if id <= 0 {
 		id = nexusurl.ID(general["url"])
 	}
 	return Meta{NexusID: id, Version: general["version"]}

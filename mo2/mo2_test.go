@@ -149,6 +149,10 @@ func TestInstancesAndMeta(t *testing.T) {
 	if got := ReadMeta(mod); got.NexusID != 77 {
 		t.Fatalf("meta from url = %+v", got)
 	}
+	write(t, filepath.Join(mod, "meta.ini"), "[General]\nmodid=-5\n")
+	if got := ReadMeta(mod); got.NexusID != 0 {
+		t.Fatalf("negative modid = %+v", got)
+	}
 	if got := ReadMeta(filepath.Join(local, "none")); got != (Meta{}) {
 		t.Fatalf("missing meta = %+v", got)
 	}
