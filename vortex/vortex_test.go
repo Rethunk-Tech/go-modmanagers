@@ -87,6 +87,9 @@ func TestReadBuildsProfilesAndMods(t *testing.T) {
 	if staging != filepath.Join(dir, "stardewvalley", "mods") || m.Folder(staging) != filepath.Join(staging, "TestRetexture-1.0.1") {
 		t.Fatalf("staging = %q, folder = %q", staging, m.Folder(staging))
 	}
+	if got := (Mod{ID: "x", InstallationPath: "../../etc"}).Folder(staging); got != "" {
+		t.Fatalf("escaping folder = %q", got)
+	}
 	if !s.MultiUser() {
 		t.Fatal("multiUser")
 	}

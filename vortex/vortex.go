@@ -261,9 +261,14 @@ func (s *State) Mods(gameID string) []Mod {
 	return out
 }
 
-// Folder is installationPath, else the id, below staging unless absolute.
+// Folder is installationPath, else the id, below staging unless absolute. A relative name that climbs out of
+// staging ("../x") is not a folder Vortex made, so it gives "" rather than a path a caller could read or delete.
 func (m Mod) Folder(staging string) string {
-	return cleanPath(staging, cmp.Or(m.InstallationPath, m.ID))
+	name := cmp.Or(m.InstallationPath, m.ID)
+	if !filepath.IsAbs(name) && !filepath.IsLocal(name) {
+		return ""
+	}
+	return cleanPath(staging, name)
 }
 
 // Attr is the first of keys holding a JSON string.
