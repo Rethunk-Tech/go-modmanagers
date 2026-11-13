@@ -90,23 +90,25 @@ func ProfileIDs(dataDir string) ([]string, error) {
 	return out, nil
 }
 
-// ReadProfile reads <dataDir>/Profiles/<id>, with ".json" added when id has no extension. The name is trimmed and
+// ReadProfile reads <dataDir>/Profiles/<id>: the *.json file with that stem, else id as a file name (".json" added when id has no extension). The name is trimmed and
 // falls back to the file stem.
 func ReadProfile(dataDir, id string) (Profile, error) {
 	if !readcap.PlainName(id) {
 		return Profile{}, fmt.Errorf("stardrop profile id %q is not a file name", id)
 	}
 	dir := filepath.Join(dataDir, "Profiles")
+	// ProfileIDs hands back stems, and a stem such as "v1.2" has an extension of its own, so the folder is
+	// searched for a *.json file with that stem before id is taken as a literal file name.
 	name := id
 	if filepath.Ext(id) == "" {
 		name = id + ".json"
-		if entries, err := os.ReadDir(dir); err == nil {
-			for _, e := range entries {
-				ext := filepath.Ext(e.Name())
-				if !e.IsDir() && strings.EqualFold(ext, ".json") && strings.TrimSuffix(e.Name(), ext) == id {
-					name = e.Name()
-					break
-				}
+	}
+	if entries, err := os.ReadDir(dir); err == nil {
+		for _, e := range entries {
+			ext := filepath.Ext(e.Name())
+			if !e.IsDir() && strings.EqualFold(ext, ".json") && strings.TrimSuffix(e.Name(), ext) == id {
+				name = e.Name()
+				break
 			}
 		}
 	}

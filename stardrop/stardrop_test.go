@@ -79,3 +79,17 @@ func TestReadProfileRefusesAnIDThatIsAPath(t *testing.T) {
 		}
 	}
 }
+
+func TestReadProfileOpensAStemWithADot(t *testing.T) {
+	t.Parallel()
+	data := DataDir(t.TempDir())
+	write(t, filepath.Join(data, "Profiles", "v1.2.json"), `{"EnabledModIds":["A.One"]}`)
+	ids, err := ProfileIDs(data)
+	if err != nil || !slices.Equal(ids, []string{"v1.2"}) {
+		t.Fatalf("ids = %v, %v", ids, err)
+	}
+	p, err := ReadProfile(data, ids[0])
+	if err != nil || p.Name != "v1.2" || !slices.Equal(p.EnabledModIDs, []string{"A.One"}) {
+		t.Fatalf("profile = %+v, %v", p, err)
+	}
+}
