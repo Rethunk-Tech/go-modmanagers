@@ -13,8 +13,8 @@ tool (
 require (
 	github.com/Rethunk-Tech/go-archive v0.3.1
 	github.com/Rethunk-Tech/go-desktopenv v0.9.1
-	github.com/Rethunk-Tech/go-httpkit v0.3.0
-	github.com/Rethunk-Tech/go-safefs v0.9.0
+	github.com/Rethunk-Tech/go-httpkit v0.3.1
+	github.com/Rethunk-Tech/go-safefs v0.9.1
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d
 	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/sys v0.50.0
