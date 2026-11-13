@@ -85,6 +85,22 @@ func TestProfiles(t *testing.T) {
 	}
 }
 
+func TestProfilesReportsAStatErrorOtherThanMissing(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+		t.Skip("a directory mode of 0 does not block Stat of a child")
+	}
+	blocked := filepath.Join(t.TempDir(), "nope")
+	if err := os.Mkdir(blocked, 0); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(blocked, 0o750) })
+	got, err := Profiles(t.Context(), filepath.Join(blocked, "data.sqlite3"))
+	if err == nil || got != nil {
+		t.Fatalf("Profiles = %v, %v; want an error", got, err)
+	}
+}
+
 func TestProfilesOfAMissingDatabaseListNothing(t *testing.T) {
 	t.Parallel()
 	for _, db := range []string{"", filepath.Join(t.TempDir(), "none.sqlite3")} {

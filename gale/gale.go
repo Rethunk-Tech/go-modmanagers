@@ -5,8 +5,10 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -66,7 +68,10 @@ func Profiles(ctx context.Context, db string) ([]Profile, error) {
 		db = abs
 	}
 	if _, err := safefs.Stat(db); err != nil {
-		return nil, nil
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, err
 	}
 	conn, err := sql.Open("sqlite", ReadOnlySQLiteURI(db))
 	if err != nil {
