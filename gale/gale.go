@@ -145,7 +145,12 @@ func reachablePath(path, slug, dataDir string) string {
 		return path
 	}
 	parts := strings.FieldsFunc(path, func(r rune) bool { return r == '/' || r == '\\' })
-	at := slices.Index(parts, slug)
+	at := -1
+	for i, p := range parts {
+		if p == slug && i+1 < len(parts) && parts[i+1] == "profiles" {
+			at = i
+		}
+	}
 	if at < 0 {
 		return path
 	}
