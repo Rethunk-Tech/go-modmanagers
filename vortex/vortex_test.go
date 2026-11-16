@@ -113,6 +113,23 @@ func TestAttrIntReadsAStringHoldingANumber(t *testing.T) {
 	}
 }
 
+func TestAttrIntRefusesJunkAroundAnInteger(t *testing.T) {
+	t.Parallel()
+	s, err := Read(newData(t, map[string]string{
+		"persistent###mods###g###trailing###attributes###modId": `"1915abc"`,
+		"persistent###mods###g###decimal###attributes###modId":  `"42.9"`,
+		"persistent###mods###g###spaced###attributes###modId":   `" 42"`,
+	}), Options{TempDir: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range s.Mods("g") {
+		if got := m.AttrInt("modId"); got != 0 {
+			t.Fatalf("%s modId = %d, want 0", m.ID, got)
+		}
+	}
+}
+
 func TestStagingFolderDefaultsAndPlaceholders(t *testing.T) {
 	t.Parallel()
 	u, err := user.Current()

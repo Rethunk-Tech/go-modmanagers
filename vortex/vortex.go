@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/Rethunk-Tech/go-modmanagers/internal/readcap"
@@ -286,11 +287,11 @@ func (m Mod) AttrInt(key string) int {
 	}
 	var text string
 	if json.Unmarshal(raw, &text) == nil {
-		if _, err := fmt.Sscan(text, &number); err != nil {
-			return 0
+		if n, err := strconv.Atoi(text); err == nil {
+			return n
 		}
 	}
-	return number
+	return 0
 }
 
 // installPattern is the staging folder Vortex uses when none is stored
