@@ -150,8 +150,10 @@ func ModsFolder(dataDir, fallback string) string {
 				path = s.ModFolderPath
 			} else if s.SMAPIFolderPath != "" {
 				path = filepath.Join(s.SMAPIFolderPath, "Mods")
+			} else {
+				return filepath.Clean(fallback)
 			}
-			if path != fallback && !filepath.IsAbs(path) {
+			if !filepath.IsAbs(path) {
 				path = filepath.Join(dataDir, path)
 			}
 		}
