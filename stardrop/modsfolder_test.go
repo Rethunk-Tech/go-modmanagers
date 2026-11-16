@@ -8,7 +8,7 @@ import (
 
 func TestModsFolderJoinsRelativeSettingEqualToFallback(t *testing.T) {
 	dataDir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dataDir, "Settings.json"), []byte(`{"ModFolderPath":"Mods"}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dataDir, "Settings.json"), []byte(`{"ModFolderPath":"Mods"}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	got := ModsFolder(dataDir, "Mods")

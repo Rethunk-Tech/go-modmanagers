@@ -1,7 +1,6 @@
 package gale
 
 import (
-	"context"
 	"database/sql"
 	"os"
 	"path/filepath"
@@ -11,11 +10,11 @@ import (
 func TestProfilesReachablePathAnchorsOnSlugThenProfiles(t *testing.T) {
 	dataDir := t.TempDir()
 	want := filepath.Join(dataDir, "lethal-company", "profiles", "Crew")
-	if err := os.MkdirAll(want, 0o755); err != nil {
+	if err := os.MkdirAll(want, 0o750); err != nil {
 		t.Fatal(err)
 	}
 	stolen := filepath.Join(dataDir, "lethal-company", ".local", "share", "com.kesomannen.gale", "lethal-company", "profiles", "Crew")
-	if err := os.MkdirAll(stolen, 0o755); err != nil {
+	if err := os.MkdirAll(stolen, 0o750); err != nil {
 		t.Fatal(err)
 	}
 
@@ -24,18 +23,19 @@ func TestProfilesReachablePathAnchorsOnSlugThenProfiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := conn.Exec(`CREATE TABLE profiles (id INTEGER PRIMARY KEY, name TEXT, path TEXT, game_slug TEXT, mods TEXT)`); err != nil {
+	ctx := t.Context()
+	if _, err := conn.ExecContext(ctx, `CREATE TABLE profiles (id INTEGER PRIMARY KEY, name TEXT, path TEXT, game_slug TEXT, mods TEXT)`); err != nil {
 		t.Fatal(err)
 	}
 	recorded := filepath.Join(t.TempDir(), "gale-slug", "lethal-company", ".local", "share", "com.kesomannen.gale", "lethal-company", "profiles", "Crew")
-	if _, err := conn.Exec(`INSERT INTO profiles (name, path, game_slug, mods) VALUES (?, ?, ?, ?)`, "Crew", recorded, "lethal-company", "[]"); err != nil {
+	if _, err := conn.ExecContext(ctx, `INSERT INTO profiles (name, path, game_slug, mods) VALUES (?, ?, ?, ?)`, "Crew", recorded, "lethal-company", "[]"); err != nil {
 		t.Fatal(err)
 	}
 	if err := conn.Close(); err != nil {
 		t.Fatal(err)
 	}
 
-	got, err := Profiles(context.Background(), db)
+	got, err := Profiles(ctx, db)
 	if err != nil {
 		t.Fatal(err)
 	}
