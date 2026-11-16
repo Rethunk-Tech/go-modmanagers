@@ -172,6 +172,22 @@ func TestStagingFolderMatchesGameIDCaseInsensitively(t *testing.T) {
 	}
 }
 
+func TestStagingFolderRefusesAGameIDThatIsNotOneLocalElement(t *testing.T) {
+	t.Parallel()
+	s, err := Read(newData(t, map[string]string{"persistent###x": `1`}), Options{TempDir: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"..", "../../../etc", "a/b", `a\b`, "/etc"} {
+		if got := s.StagingFolder(id); got != "" {
+			t.Fatalf("StagingFolder(%q) = %q, want a refusal", id, got)
+		}
+	}
+	if got := s.StagingFolder("g"); got != filepath.Join(s.dataDir, "g", "mods") {
+		t.Fatalf("StagingFolder(%q) = %q, a local game id was refused", "g", got)
+	}
+}
+
 func TestNestedProfilesDecodeIndependently(t *testing.T) {
 	t.Parallel()
 	s, err := Read(newData(t, map[string]string{"persistent###profiles": `{"stardewvalley":{

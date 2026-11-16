@@ -302,8 +302,12 @@ var placeholder = regexp.MustCompile(`(?i)\{(userdata|username|game)\}`)
 // StagingFolder resolves settings.mods.installPath.<gameID> as Vortex's resolveInstallPath does: {USERDATA},
 // {USERNAME} and {GAME} expand case-insensitively, backslashes are accepted, the default is
 // "{USERDATA}/{GAME}/mods", and a relative result is relative to the data dir. {USERNAME} is the last segment of
-// the OS user's name.
+// the OS user's name. A gameID that is not a single local path element gives "" rather than a staging folder
+// outside the data dir, the same refusal Mod.Folder gives.
 func (s *State) StagingFolder(gameID string) string {
+	if !filepath.IsLocal(gameID) || strings.ContainsAny(gameID, `/\`) {
+		return ""
+	}
 	var pattern string
 	for id, raw := range objectValue(objectValue(objectValue(s.tree, "settings"), "mods"), "installPath") {
 		if strings.EqualFold(id, gameID) {
