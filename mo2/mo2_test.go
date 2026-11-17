@@ -164,10 +164,25 @@ func FuzzModlist(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		seen := map[string]bool{}
 		for _, e := range ParseModlist(data) {
-			if e.Name == "" || seen[e.Name] || strings.HasPrefix(e.Name, "*") || strings.HasSuffix(e.Name, "_separator") {
+			if e.Name == "" || seen[e.Name] || strings.HasPrefix(e.Name, "*") || strings.HasSuffix(e.Name, "_separator") || !readcap.PlainName(e.Name) {
 				t.Fatalf("bad entry %+v", e)
 			}
 			seen[e.Name] = true
+		}
+	})
+}
+
+func FuzzMeta(f *testing.F) {
+	f.Add([]byte("[General]\r\nmodid=1915\r\nversion=2.0.0\r\n"))
+	f.Add([]byte("[General]\nmodid=0\nurl=https://www.nexusmods.com/stardewvalley/mods/77\n"))
+	f.Add([]byte("[General]\nmodid=-5\n"))
+	f.Add([]byte("not ini"))
+	f.Fuzz(func(t *testing.T, data []byte) {
+		dir := t.TempDir()
+		write(t, filepath.Join(dir, "meta.ini"), string(data))
+		m := ReadMeta(dir)
+		if m.NexusID < 0 {
+			t.Fatalf("meta = %+v", m)
 		}
 	})
 }

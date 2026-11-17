@@ -2,6 +2,7 @@ package vortex
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"io/fs"
 	"os"
@@ -322,8 +323,47 @@ func FuzzTree(f *testing.F) {
 		}
 		s := &State{dataDir: "d", tree: tree}
 		s.Profiles("")
-		s.Mods(k1)
 		s.StagingFolder(k2)
 		s.MultiUser()
+		for _, m := range s.Mods(k1) {
+			m.Folder(k2)
+			m.Attr("name", "uniqueId", "version")
+			m.AttrInt("modId")
+		}
+	})
+}
+
+func FuzzFolder(f *testing.F) {
+	f.Add("TestRetexture-1.0.1", "TestRetexture-1.0.1", "/data/mods")
+	f.Add("id", "../x", "/data/mods")
+	f.Add("id", "/abs/path", "/data/mods")
+	f.Add("..", "", "/data/mods")
+	f.Fuzz(func(t *testing.T, id, install, staging string) {
+		got := (Mod{ID: id, InstallationPath: install}).Folder(staging)
+		if got == "" {
+			return
+		}
+		name := install
+		if name == "" {
+			name = id
+		}
+		if filepath.IsAbs(name) {
+			return
+		}
+		rel, err := filepath.Rel(filepath.Clean(staging), filepath.Clean(got))
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			t.Fatalf("Folder(%q, %q, staging=%q) = %q escapes", id, install, staging, got)
+		}
+	})
+}
+
+func FuzzAttrInt(f *testing.F) {
+	f.Add([]byte(`1915`))
+	f.Add([]byte(`"1915"`))
+	f.Add([]byte(`true`))
+	f.Add([]byte(`" 1"`))
+	f.Add([]byte(`99999999999999999999`))
+	f.Fuzz(func(t *testing.T, raw []byte) {
+		_ = (Mod{Attributes: map[string]json.RawMessage{"k": json.RawMessage(raw)}}).AttrInt("k")
 	})
 }

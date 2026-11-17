@@ -11,6 +11,31 @@ import (
 	"github.com/Rethunk-Tech/go-safefs"
 )
 
+func FuzzPlainName(f *testing.F) {
+	f.Add("ok")
+	f.Add("..")
+	f.Add("../x")
+	f.Add("a/b")
+	f.Add(`a\b`)
+	f.Add("a:b")
+	f.Add("")
+	f.Add(".")
+	f.Add("x.json:stream")
+	f.Fuzz(func(t *testing.T, name string) {
+		if !PlainName(name) {
+			return
+		}
+		if filepath.Base(name) != name || name == "." || name == ".." {
+			t.Fatalf("PlainName(%q) is not one path element", name)
+		}
+		root := string(filepath.Separator) + "root"
+		rel, err := filepath.Rel(root, filepath.Join(root, name))
+		if err != nil || !filepath.IsLocal(rel) {
+			t.Fatalf("PlainName(%q) joins outside the root", name)
+		}
+	})
+}
+
 func TestFile(t *testing.T) {
 	dir := t.TempDir()
 	write := func(name string, n int) string {

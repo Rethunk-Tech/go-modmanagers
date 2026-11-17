@@ -71,6 +71,23 @@ func TestModsFolderResolvesARelativeSettingAgainstTheDataFolder(t *testing.T) {
 	}
 }
 
+func FuzzModsFolder(f *testing.F) {
+	f.Add([]byte(`{"ModFolderPath":"Mods"}`))
+	f.Add([]byte(`{"SMAPIFolderPath":"/smapi"}`))
+	f.Add([]byte(`{"ModFolderPath":"","SMAPIFolderPath":""}`))
+	f.Add([]byte(`[`))
+	f.Fuzz(func(t *testing.T, data []byte) {
+		if len(data) > 1<<20 {
+			data = data[:1<<20]
+		}
+		dir := t.TempDir()
+		write(t, filepath.Join(dir, "Settings.json"), string(data))
+		if got := ModsFolder(dir, "fb"); got == "" {
+			t.Fatal("empty path")
+		}
+	})
+}
+
 func FuzzProfile(f *testing.F) {
 	f.Add([]byte(`{"Name":"n","EnabledModIds":["a",{"UniqueId":"b"}],"ModData":[{}],"PreservedModConfigs":{"x":null}}`))
 	f.Add([]byte(`{"EnabledModIds":[1]}`))

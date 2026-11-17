@@ -439,8 +439,8 @@ func FuzzModsYML(f *testing.F) {
 	f.Add([]byte("- name: A-B\n  version: {major: 1, minor: 2, patch: 3}\n"))
 	f.Add([]byte(yamlMergeCrash))
 	f.Add([]byte("- [\n"))
-	dir := f.TempDir()
 	f.Fuzz(func(t *testing.T, data []byte) {
+		dir := t.TempDir()
 		write(t, filepath.Join(dir, "mods.yml"), string(data))
 		p, err := ReadProfile(dir)
 		if err != nil {
