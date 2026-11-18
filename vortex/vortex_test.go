@@ -367,3 +367,114 @@ func FuzzAttrInt(f *testing.F) {
 		_ = (Mod{Attributes: map[string]json.RawMessage{"k": json.RawMessage(raw)}}).AttrInt("k")
 	})
 }
+
+func TestParentMapBlobMergesALaterChildMap(t *testing.T) {
+	t.Parallel()
+	s, err := Read(newData(t, map[string]string{
+		"persistent###profiles":        `{"keep":{"gameId":"g","name":"parent","modState":{"old":{"enabled":true}}},"onlyParent":{"gameId":"g","name":"blob"}}`,
+		"persistent###profiles###keep": `{"name":"child","id":"keep"}`,
+	}), Options{TempDir: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]Profile{}
+	for _, p := range s.Profiles("g") {
+		got[p.ID] = p
+	}
+	if len(got) != 2 || got["keep"].Name != "child" || !got["keep"].Enabled["old"] || got["onlyParent"].Name != "blob" {
+		t.Fatalf("merged profiles = %#v", got)
+	}
+}
+
+func TestProfilesAndModsSkipValuesThatAreNotObjects(t *testing.T) {
+	t.Parallel()
+	s, err := Read(newData(t, map[string]string{
+		"persistent###profiles###good###gameId": `"g"`,
+		"persistent###profiles###bad":           `"not-an-object"`,
+		"persistent###profiles###flag":          `true`,
+		"persistent###mods###g###good###id":     `"m"`,
+		"persistent###mods###g###bad":           `[]`,
+		"persistent###mods###g###flag":          `true`,
+	}), Options{TempDir: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ps := s.Profiles("g"); len(ps) != 1 || ps[0].ID != "good" {
+		t.Fatalf("profiles = %+v", ps)
+	}
+	mods := s.Mods("g")
+	if len(mods) != 1 || mods[0].ID != "m" {
+		t.Fatalf("mods = %+v", mods)
+	}
+	if mods[0].AttrInt("modId") != 0 {
+		t.Fatalf("missing modId = %d", mods[0].AttrInt("modId"))
+	}
+	empty, err := Read(newData(t, map[string]string{"persistent": `true`}), Options{TempDir: t.TempDir()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ps := empty.Profiles(""); len(ps) != 0 {
+		t.Fatalf("non-object persistent = %+v", ps)
+	}
+}
+
+func TestCopyLevelDBSkipsLockAndCopiesSstTables(t *testing.T) {
+	t.Parallel()
+	src := filepath.Join(newData(t, vortex28()), "state.v2")
+	if err := os.WriteFile(filepath.Join(src, "LOCK"), []byte("held"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "000012.sst"), []byte("table"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(src, "lost"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	dst := t.TempDir()
+	if err := copyLevelDB(src, dst); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dst, "LOCK")); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatal("LOCK was copied")
+	}
+	if _, err := os.Stat(filepath.Join(dst, "000012.sst")); err != nil {
+		t.Fatalf("sst table: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dst, "lost")); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatal("a directory was copied")
+	}
+}
+
+func TestReadReportsADatabaseItCannotCopyOrOpen(t *testing.T) {
+	t.Parallel()
+	dir := newData(t, vortex28())
+	if _, err := Read(dir, Options{TempDir: filepath.Join(t.TempDir(), "missing")}); err == nil {
+		t.Fatal("a missing TempDir parent was used")
+	}
+	if err := os.WriteFile(filepath.Join(dir, "state.v2", "CURRENT"), []byte("MANIFEST-missing\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Read(dir, Options{TempDir: t.TempDir()}); err == nil {
+		t.Fatal("CURRENT pointing at a missing manifest was opened")
+	}
+	unreadable := newData(t, vortex28())
+	blocked := filepath.Join(unreadable, "state.v2", "CURRENT")
+	if err := os.Chmod(blocked, 0); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(blocked, 0o600) })
+	if _, err := Read(unreadable, Options{TempDir: t.TempDir()}); err == nil {
+		t.Fatal("an unreadable table was copied")
+	}
+	if err := copyLevelDB(filepath.Join(t.TempDir(), "missing"), t.TempDir()); err == nil {
+		t.Fatal("a missing source was copied")
+	}
+	dst := t.TempDir()
+	if err := os.Chmod(dst, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(dst, 0o700) })
+	if err := copyLevelDB(filepath.Join(newData(t, vortex28()), "state.v2"), dst); err == nil {
+		t.Fatal("an unwritable destination was copied into")
+	}
+}
