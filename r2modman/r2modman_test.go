@@ -614,7 +614,6 @@ func TestConfigsReportsAWalkError(t *testing.T) {
 	if err := os.Chmod(cfg, 0); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(cfg, 0o750) })
 	if _, err := Configs(dir); err == nil {
 		t.Fatal("an unreadable config folder was walked")
 	}

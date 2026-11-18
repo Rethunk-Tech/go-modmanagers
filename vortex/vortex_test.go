@@ -469,12 +469,11 @@ func TestReadReportsADatabaseItCannotCopyOrOpen(t *testing.T) {
 	if err := copyLevelDB(filepath.Join(t.TempDir(), "missing"), t.TempDir()); err == nil {
 		t.Fatal("a missing source was copied")
 	}
-	dst := t.TempDir()
-	if err := os.Chmod(dst, 0o500); err != nil {
+	dst := filepath.Join(t.TempDir(), "not-a-dir")
+	if err := os.WriteFile(dst, nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(dst, 0o700) })
 	if err := copyLevelDB(filepath.Join(newData(t, vortex28()), "state.v2"), dst); err == nil {
-		t.Fatal("an unwritable destination was copied into")
+		t.Fatal("a file destination was copied into")
 	}
 }
