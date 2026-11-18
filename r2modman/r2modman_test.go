@@ -3,6 +3,7 @@ package r2modman
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -515,5 +516,106 @@ func TestConfigsCapsTheFileCount(t *testing.T) {
 	}
 	if _, err := Configs(dir); !errors.Is(err, safefs.ErrTooLarge) {
 		t.Fatalf("Configs = %v, want ErrTooLarge", err)
+	}
+}
+
+func TestReadExportIgnoresDirectoryEntries(t *testing.T) {
+	t.Parallel()
+	got, err := ReadExport(buildZip(t,
+		entry{name: exportFile, body: export},
+		entry{name: "config/", mode: fs.ModeDir | 0o755},
+		entry{name: "config/a.cfg", body: "x=1"},
+	))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Files) != 1 || string(got.Files["config/a.cfg"]) != "x=1" {
+		t.Fatalf("files = %v", got.Files)
+	}
+}
+
+func TestIsDataFolderRefusesAPathThatCannotBeRead(t *testing.T) {
+	t.Parallel()
+	if IsDataFolder(filepath.Join(t.TempDir(), "missing")) {
+		t.Fatal("a missing folder was a data folder")
+	}
+	file := filepath.Join(t.TempDir(), "file")
+	write(t, file, "")
+	if IsDataFolder(file) {
+		t.Fatal("a file was a data folder")
+	}
+}
+
+func TestCreateCodeUsesTheDefaultClient(t *testing.T) {
+	t.Parallel()
+	const want = "0123abcd-0123-0123-0123-0123456789ab"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("method %s", r.Method)
+		}
+		_, _ = fmt.Fprintf(w, `{"key":%q}`, want)
+	}))
+	t.Cleanup(srv.Close)
+	z, err := WriteExport(Export{ProfileName: "Friends"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := CreateCode(t.Context(), nil, srv.URL, z)
+	if err != nil || key != want {
+		t.Fatalf("%q %v", key, err)
+	}
+}
+
+func TestCodeRequestsReportConstructionAndTransportErrors(t *testing.T) {
+	t.Parallel()
+	const uuid = "0123abcd-0123-0123-0123-0123456789ab"
+	if _, err := (Client{BaseURL: "http://["}).FetchCode(t.Context(), uuid); err == nil {
+		t.Fatal("FetchCode accepted a BaseURL that is not a URL")
+	}
+	if _, err := CreateCode(t.Context(), http.DefaultClient, "http://[", nil); err == nil {
+		t.Fatal("CreateCode accepted a base that is not a URL")
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	if _, err := CreateCode(ctx, http.DefaultClient, "http://127.0.0.1:1", []byte("x")); err == nil {
+		t.Fatal("CreateCode ignored a cancelled context")
+	}
+}
+
+func TestCodeRequestsUseThunderstoreWhenTheBaseIsEmpty(t *testing.T) {
+	t.Parallel()
+	const uuid = "0123abcd-0123-0123-0123-0123456789ab"
+	var got []*http.Request
+	hc := &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		got = append(got, r.Clone(r.Context()))
+		return nil, errors.New("stop")
+	})}
+	_, _ = (Client{HTTP: hc}).FetchCode(t.Context(), uuid)
+	_, _ = CreateCode(t.Context(), hc, "", nil)
+	if len(got) != 2 || got[0].URL.Host != "thunderstore.io" || got[1].URL.Host != "thunderstore.io" {
+		t.Fatalf("hosts = %v", got)
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestConfigsReportsAWalkError(t *testing.T) {
+	t.Parallel()
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod of the config folder is the Unix way to make WalkDir fail")
+	}
+	dir := t.TempDir()
+	cfg := filepath.Join(dir, "BepInEx", "config")
+	if err := os.MkdirAll(cfg, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(cfg, 0); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(cfg, 0o750) })
+	if _, err := Configs(dir); err == nil {
+		t.Fatal("an unreadable config folder was walked")
 	}
 }
