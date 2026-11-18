@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -457,14 +458,18 @@ func TestReadReportsADatabaseItCannotCopyOrOpen(t *testing.T) {
 	if _, err := Read(dir, Options{TempDir: t.TempDir()}); err == nil {
 		t.Fatal("CURRENT pointing at a missing manifest was opened")
 	}
-	unreadable := newData(t, vortex28())
-	blocked := filepath.Join(unreadable, "state.v2", "CURRENT")
-	if err := os.Chmod(blocked, 0); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chmod(blocked, 0o600) })
-	if _, err := Read(unreadable, Options{TempDir: t.TempDir()}); err == nil {
-		t.Fatal("an unreadable table was copied")
+	// Windows chmod only toggles the read-only attribute, so a 0 mode still reads; there a file is made
+	// unreadable by holding it open with an exclusive share mode, which the test cannot do.
+	if runtime.GOOS != "windows" {
+		unreadable := newData(t, vortex28())
+		blocked := filepath.Join(unreadable, "state.v2", "CURRENT")
+		if err := os.Chmod(blocked, 0); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(blocked, 0o600) })
+		if _, err := Read(unreadable, Options{TempDir: t.TempDir()}); err == nil {
+			t.Fatal("an unreadable table was copied")
+		}
 	}
 	if err := copyLevelDB(filepath.Join(t.TempDir(), "missing"), t.TempDir()); err == nil {
 		t.Fatal("a missing source was copied")
