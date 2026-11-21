@@ -14,12 +14,7 @@ const MaxFile = 16 << 20
 // File reads the file at path, refusing one larger than limit (an error wrapping safefs.ErrTooLarge) instead of
 // holding it whole.
 func File(path string, limit int64) ([]byte, error) {
-	f, err := safefs.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = f.Close() }()
-	b, err := safefs.ReadCapped(f, limit)
+	b, err := safefs.ReadFileCapped(path, limit)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", filepath.Base(path), err)
 	}

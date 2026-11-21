@@ -92,12 +92,7 @@ func Configs(profileDir string) ([]File, error) {
 
 // readCapped reads a file of at most 16 MiB, naming it in the error of a larger one.
 func readCapped(file string) ([]byte, error) {
-	f, err := safefs.Open(file)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = f.Close() }()
-	b, err := safefs.ReadCapped(f, maxFile)
+	b, err := safefs.ReadFileCapped(file, maxFile)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", filepath.Base(file), err)
 	}
