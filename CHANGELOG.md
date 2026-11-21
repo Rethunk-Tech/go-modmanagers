@@ -6,6 +6,13 @@ Notable changes to `go-modmanagers`. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Gale: relative database paths open as a rooted SQLite URI, profiles are listed only when their resolved path is inside the data folder, moved profile paths are rebuilt from `slug/profiles`, and `Profiles` returns a `Stat` error other than missing.
+- Stardrop: a relative `ModFolderPath` is resolved against the data folder, and a profile opens when its file stem contains a dot or its file is `*.JSON`.
+- Vortex: `StagingFolder` honours a case-insensitive game id and refuses an id that is not one local path element, a mod folder that climbs out of staging is refused, and a string attribute is read as an int only when it is wholly an integer.
+- MO2: instance folders that are symlinks are listed, and a negative `modid` in `meta.ini` is ignored.
+
 ## [0.3.0] - 2026-11-08
 
 ### Added
